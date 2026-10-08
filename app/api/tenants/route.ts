@@ -8,11 +8,64 @@ import {
   rejectProvisioningRequest,
   addStaffAuditLog,
 } from '../../../lib/fleet/telemetryStore'
-import type { TenantStore } from '../../../types/fleet'
+import type { TenantStore, SubscriptionTier, BillingStatus } from '../../../types/fleet'
+import { sql } from '../../../lib/db/client'
+
+export const dynamic = 'force-dynamic'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
+
+  try {
+    const dbTenants = await sql`
+      SELECT 
+        t.id, t.name, t.legal_name as "legalName", t.slug, t.phone as "ownerPhone",
+        t.email as "ownerEmail", t.subscription_tier as "plan", t.status,
+        t.created_at as "createdAt"
+      FROM fnb.tenants t;
+    `
+    if (dbTenants && dbTenants.length > 0) {
+      const localTenants = getFleetTenants()
+      const mapped: TenantStore[] = dbTenants.map((dbT: any) => {
+        const localMatch = localTenants.find((lt) => lt.id === dbT.id || lt.slug === dbT.slug)
+        return {
+          id: dbT.id,
+          name: dbT.name,
+          legalName: dbT.legalName || dbT.name,
+          slug: dbT.slug,
+          ownerName: localMatch?.ownerName || 'Pemilik Resto',
+          ownerPhone: dbT.ownerPhone || localMatch?.ownerPhone || '-',
+          ownerEmail: dbT.ownerEmail || localMatch?.ownerEmail || '-',
+          address: localMatch?.address || 'Jakarta Selatan',
+          subscriptionTier: (dbT.plan as SubscriptionTier) || localMatch?.subscriptionTier || 'pro',
+          billingStatus: (dbT.status as BillingStatus) || localMatch?.billingStatus || 'active',
+          billingCycle: localMatch?.billingCycle || 'annually',
+          monthlyFee: localMatch?.monthlyFee || 499000,
+          lifetimePaid: localMatch?.lifetimePaid || 1497000,
+          autoRenew: localMatch?.autoRenew ?? true,
+          subscriptionValidUntil: localMatch?.subscriptionValidUntil || (Date.now() + 1000 * 60 * 60 * 24 * 180),
+          maxOutlets: localMatch?.maxOutlets || 5,
+          maxTerminals: localMatch?.maxTerminals || 10,
+          healthStatus: localMatch?.healthStatus || 'healthy',
+          liveStoreUrl: localMatch?.liveStoreUrl || 'https://fnb-erp.vercel.app',
+          activeOutlets: localMatch?.activeOutlets || [],
+          modules: localMatch?.modules || { pos_quick_service: true, kitchen_routing_kds: true },
+          emergencyMaintenance: localMatch?.emergencyMaintenance ?? false,
+          createdAt: new Date(dbT.createdAt).getTime(),
+          updatedAt: Date.now(),
+        }
+      })
+
+      if (id) {
+        const single = mapped.find((m) => m.id === id)
+        return NextResponse.json({ success: true, tenant: single || null })
+      }
+      return NextResponse.json({ success: true, tenants: mapped, total: mapped.length })
+    }
+  } catch (err) {
+    console.warn('[fnb-ops] Falling back to local tenant store:', err)
+  }
 
   if (id) {
     const tenant = getTenantById(id)
@@ -23,7 +76,6 @@ export async function GET(request: Request) {
   }
 
   const tenants = getFleetTenants()
-  return NextResponse.json({ success: true, tenants, total: tenants.length })
 }
 
 export async function POST(request: Request) {
