@@ -8,6 +8,9 @@ import {
   Wrench,
   UserPlus,
   FileText,
+  CreditCard,
+  Database,
+  Layers,
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
@@ -15,9 +18,12 @@ import {
 export type ActiveOpsTab =
   | 'overview'
   | 'tenants'
+  | 'billing'
   | 'logs'
   | 'remediation'
   | 'provisioning'
+  | 'backups'
+  | 'rollout'
   | 'audit'
 
 interface FleetSidebarProps {
@@ -25,6 +31,7 @@ interface FleetSidebarProps {
   setActiveTab: (tab: ActiveOpsTab) => void
   openIncidentsCount: number
   pendingRequestsCount: number
+  pendingInvoicesCount: number
   isCollapsed: boolean
   setIsCollapsed: (collapsed: boolean) => void
 }
@@ -34,12 +41,13 @@ export default function FleetSidebar({
   setActiveTab,
   openIncidentsCount,
   pendingRequestsCount,
+  pendingInvoicesCount,
   isCollapsed,
   setIsCollapsed,
 }: FleetSidebarProps) {
   const navSections = [
     {
-      category: 'Armada',
+      category: 'Armada & Klien',
       items: [
         {
           id: 'overview' as ActiveOpsTab,
@@ -52,6 +60,13 @@ export default function FleetSidebar({
           icon: Store,
         },
         {
+          id: 'billing' as ActiveOpsTab,
+          label: 'Keuangan & Paket SaaS',
+          icon: CreditCard,
+          badge: pendingInvoicesCount > 0 ? pendingInvoicesCount : undefined,
+          badgeVariant: 'amber',
+        },
+        {
           id: 'logs' as ActiveOpsTab,
           label: 'Log & Insiden',
           icon: Terminal,
@@ -61,7 +76,7 @@ export default function FleetSidebar({
       ],
     },
     {
-      category: 'Remediasi & Kontrol',
+      category: 'Remediasi & Operasi',
       items: [
         {
           id: 'remediation' as ActiveOpsTab,
@@ -74,6 +89,16 @@ export default function FleetSidebar({
           icon: UserPlus,
           badge: pendingRequestsCount > 0 ? pendingRequestsCount : undefined,
           badgeVariant: 'amber',
+        },
+        {
+          id: 'backups' as ActiveOpsTab,
+          label: 'Snapshot & Cadangan DB',
+          icon: Database,
+        },
+        {
+          id: 'rollout' as ActiveOpsTab,
+          label: 'Rollout & Versi POS',
+          icon: Layers,
         },
       ],
     },

@@ -1,4 +1,233 @@
-import type { TenantStore, RemoteLogEntry, StaffAuditLog, ProvisioningRequest } from '../../types/fleet'
+import type {
+  TenantStore,
+  RemoteLogEntry,
+  StaffAuditLog,
+  ProvisioningRequest,
+  TenantInvoice,
+  DatabaseBackupJob,
+  ClientAppRolloutStatus,
+  SaaSFinanceOverview,
+} from '../../types/fleet'
+
+export const INITIAL_INVOICES: TenantInvoice[] = [
+  {
+    id: 'inv-2026-001',
+    invoiceNumber: 'INV/2026/10/001',
+    tenantId: 'org-resto',
+    tenantName: 'Nusantara Bistro',
+    planTier: 'enterprise',
+    billingCycle: 'annually',
+    amount: 19990000,
+    status: 'paid',
+    issuedAt: Date.now() - 1000 * 60 * 60 * 24 * 30,
+    dueDate: Date.now() - 1000 * 60 * 60 * 24 * 23,
+    paidAt: Date.now() - 1000 * 60 * 60 * 24 * 28,
+    paymentMethod: 'va_bca',
+    items: [
+      {
+        description: 'Paket Enterprise (1 Tahun / 12 Bulan)',
+        quantity: 1,
+        unitPrice: 19990000,
+        subtotal: 19990000,
+      },
+    ],
+    notes: 'Pembayaran tahunan lunas via Virtual Account BCA Korporat.',
+  },
+  {
+    id: 'inv-2026-002',
+    invoiceNumber: 'INV/2026/10/002',
+    tenantId: 'tenant-fine-dining',
+    tenantName: 'Mori Japanese Dining & Izakaya',
+    planTier: 'enterprise',
+    billingCycle: 'annually',
+    amount: 21190000,
+    status: 'paid',
+    issuedAt: Date.now() - 1000 * 60 * 60 * 24 * 45,
+    dueDate: Date.now() - 1000 * 60 * 60 * 24 * 38,
+    paidAt: Date.now() - 1000 * 60 * 60 * 24 * 42,
+    paymentMethod: 'va_mandiri',
+    items: [
+      {
+        description: 'Paket Enterprise (1 Tahun)',
+        quantity: 1,
+        unitPrice: 19990000,
+        subtotal: 19990000,
+      },
+      {
+        description: 'Add-on Dedicated KDS Cloud Stream (1 Tahun)',
+        quantity: 1,
+        unitPrice: 1200000,
+        subtotal: 1200000,
+      },
+    ],
+    notes: 'Perpanjangan kontrak tahun ke-2 Mori Boga Sukses.',
+  },
+  {
+    id: 'inv-2026-003',
+    invoiceNumber: 'INV/2026/10/003',
+    tenantId: 'tenant-kopi-artisan',
+    tenantName: 'Kopi Titik Temu & Roastery',
+    planTier: 'pro',
+    billingCycle: 'monthly',
+    amount: 949000,
+    status: 'pending',
+    issuedAt: Date.now() - 1000 * 60 * 60 * 24 * 2,
+    dueDate: Date.now() + 1000 * 60 * 60 * 24 * 5, // Due in 5 days
+    paymentMethod: 'qris',
+    items: [
+      {
+        description: 'Paket Pro Bulanan (Periode Oktober - November 2026)',
+        quantity: 1,
+        unitPrice: 799000,
+        subtotal: 799000,
+      },
+      {
+        description: 'Add-on 1 Extra Cabang (Cabang Kemang)',
+        quantity: 1,
+        unitPrice: 150000,
+        subtotal: 150000,
+      },
+    ],
+    notes: 'Tagihan rutin bulanan. Menunggu verifikasi settlement QRIS dinamis.',
+  },
+  {
+    id: 'inv-2026-004',
+    invoiceNumber: 'INV/2026/10/004',
+    tenantId: 'tenant-bakmi-nusantara',
+    tenantName: 'Bakmi Warisan 1982',
+    planTier: 'pro',
+    billingCycle: 'monthly',
+    amount: 799000,
+    status: 'overdue',
+    issuedAt: Date.now() - 1000 * 60 * 60 * 24 * 10,
+    dueDate: Date.now() - 1000 * 60 * 60 * 24 * 2, // 2 days past due!
+    paymentMethod: 'manual_transfer',
+    items: [
+      {
+        description: 'Paket Pro Bulanan (Perpanjangan Lisensi Kasir)',
+        quantity: 1,
+        unitPrice: 799000,
+        subtotal: 799000,
+      },
+    ],
+    notes: 'Jatuh tempo terlewati. Akun masuk masa tenggang (Grace Period 3 hari).',
+  },
+  {
+    id: 'inv-2026-005',
+    invoiceNumber: 'INV/2026/10/005',
+    tenantId: 'tenant-grab-booth',
+    tenantName: 'Kopi Booth Express Sudirman',
+    planTier: 'starter',
+    billingCycle: 'monthly',
+    amount: 299000,
+    status: 'pending',
+    issuedAt: Date.now() - 1000 * 60 * 60 * 24 * 1,
+    dueDate: Date.now() + 1000 * 60 * 60 * 24 * 11, // Due in 11 days
+    paymentMethod: 'qris',
+    items: [
+      {
+        description: 'Aktivasi Paket Starter Paska Trial 14 Hari',
+        quantity: 1,
+        unitPrice: 299000,
+        subtotal: 299000,
+      },
+    ],
+    notes: 'Konversi akun dari masa uji coba gratis.',
+  },
+  {
+    id: 'inv-2026-006',
+    invoiceNumber: 'INV/2026/09/014',
+    tenantId: 'tenant-kopi-artisan',
+    tenantName: 'Kopi Titik Temu & Roastery',
+    planTier: 'pro',
+    billingCycle: 'monthly',
+    amount: 799000,
+    status: 'paid',
+    issuedAt: Date.now() - 1000 * 60 * 60 * 24 * 32,
+    dueDate: Date.now() - 1000 * 60 * 60 * 24 * 25,
+    paidAt: Date.now() - 1000 * 60 * 60 * 24 * 26,
+    paymentMethod: 'va_bca',
+    items: [
+      {
+        description: 'Paket Pro Bulanan (September 2026)',
+        quantity: 1,
+        unitPrice: 799000,
+        subtotal: 799000,
+      },
+    ],
+    notes: 'Pembayaran bulan lalu lunas.',
+  },
+]
+
+export const INITIAL_BACKUPS: DatabaseBackupJob[] = [
+  {
+    id: 'bkp-resto-001',
+    tenantId: 'org-resto',
+    tenantName: 'Nusantara Bistro',
+    snapshotSizeMb: 48.2,
+    totalRecordsCount: 14820,
+    status: 'completed',
+    createdAt: Date.now() - 1000 * 60 * 60 * 4,
+    checksum: 'sha256:7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c',
+    retentionDays: 90,
+  },
+  {
+    id: 'bkp-mori-002',
+    tenantId: 'tenant-fine-dining',
+    tenantName: 'Mori Japanese Dining & Izakaya',
+    snapshotSizeMb: 32.6,
+    totalRecordsCount: 9420,
+    status: 'completed',
+    createdAt: Date.now() - 1000 * 60 * 60 * 6,
+    checksum: 'sha256:3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d',
+    retentionDays: 90,
+  },
+  {
+    id: 'bkp-titik-003',
+    tenantId: 'tenant-kopi-artisan',
+    tenantName: 'Kopi Titik Temu & Roastery',
+    snapshotSizeMb: 18.4,
+    totalRecordsCount: 5210,
+    status: 'completed',
+    createdAt: Date.now() - 1000 * 60 * 60 * 8,
+    checksum: 'sha256:9f8e7d6c5b4a3f2e1d0c9b8a7f6e5d4c',
+    retentionDays: 30,
+  },
+  {
+    id: 'bkp-bakmi-004',
+    tenantId: 'tenant-bakmi-nusantara',
+    tenantName: 'Bakmi Warisan 1982',
+    snapshotSizeMb: 24.1,
+    totalRecordsCount: 6840,
+    status: 'completed',
+    createdAt: Date.now() - 1000 * 60 * 60 * 12,
+    checksum: 'sha256:1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d',
+    retentionDays: 30,
+  },
+]
+
+export const INITIAL_ROLLOUTS: ClientAppRolloutStatus[] = [
+  {
+    version: 'v2.5.0-prod',
+    releaseChannel: 'production',
+    isLatest: true,
+    releaseDate: '2026-10-06',
+    activeTenantsCount: 4,
+    activeTerminalsCount: 14,
+    adoptionPct: 87.5,
+    notes: 'Hotfix printer ESC/POS cut buffer & IndexedDB auto-vacuuming.',
+  },
+  {
+    version: 'v2.4.2-stable',
+    releaseChannel: 'canary',
+    isLatest: false,
+    releaseDate: '2026-09-22',
+    activeTenantsCount: 1,
+    activeTerminalsCount: 1,
+    adoptionPct: 12.5,
+    notes: 'Versi legacy pada terminal kasir Pasar Baru (Bakmi Warisan).',
+  },
+]
 
 export const INITIAL_TENANTS: TenantStore[] = [
   {
@@ -11,6 +240,10 @@ export const INITIAL_TENANTS: TenantStore[] = [
     ownerEmail: 'owner@nusantarabistro.id',
     subscriptionTier: 'enterprise',
     billingStatus: 'active',
+    billingCycle: 'annually',
+    monthlyFee: 1999000,
+    lifetimePaid: 39980000,
+    autoRenew: true,
     subscriptionValidUntil: Date.now() + 1000 * 60 * 60 * 24 * 180, // 180 days
     maxOutlets: 10,
     maxTerminals: 25,
@@ -58,8 +291,8 @@ export const INITIAL_TENANTS: TenantStore[] = [
           batteryLevel: 94,
           isCharging: true,
           networkLatencyMs: 24,
-          lastHeartbeatAt: Date.now() - 1000 * 45, // 45s ago
-          appVersion: 'v2.4.0-prod',
+          lastHeartbeatAt: Date.now() - 1000 * 45,
+          appVersion: 'v2.5.0-prod',
         },
         {
           deviceId: 'dev-seno-kds1',
@@ -70,8 +303,8 @@ export const INITIAL_TENANTS: TenantStore[] = [
           browser: 'Chrome 122.0',
           screenResolution: '1920x1080',
           networkLatencyMs: 18,
-          lastHeartbeatAt: Date.now() - 1000 * 20, // 20s ago
-          appVersion: 'v2.4.0-prod',
+          lastHeartbeatAt: Date.now() - 1000 * 20,
+          appVersion: 'v2.5.0-prod',
         },
         {
           deviceId: 'dev-dago-pos1',
@@ -84,8 +317,8 @@ export const INITIAL_TENANTS: TenantStore[] = [
           batteryLevel: 68,
           isCharging: false,
           networkLatencyMs: 35,
-          lastHeartbeatAt: Date.now() - 1000 * 60, // 1m ago
-          appVersion: 'v2.4.0-prod',
+          lastHeartbeatAt: Date.now() - 1000 * 60,
+          appVersion: 'v2.5.0-prod',
         },
       ],
       printers: [
@@ -99,34 +332,14 @@ export const INITIAL_TENANTS: TenantStore[] = [
           lastPrintJobAt: Date.now() - 1000 * 180,
           failedJobsCount: 0,
         },
-        {
-          printerId: 'prn-seno-kitchen',
-          outletId: 'out-senopati',
-          name: 'Sunmi Kitchen Bell ESC/POS 80mm',
-          connectionType: 'network',
-          paperWidth: '80mm',
-          status: 'connected',
-          lastPrintJobAt: Date.now() - 1000 * 120,
-          failedJobsCount: 0,
-        },
-        {
-          printerId: 'prn-dago-main',
-          outletId: 'out-dago',
-          name: 'Panda Thermal Bluetooth 58mm',
-          connectionType: 'bluetooth',
-          paperWidth: '58mm',
-          status: 'connected',
-          lastPrintJobAt: Date.now() - 1000 * 400,
-          failedJobsCount: 0,
-        },
       ],
       storage: {
         outletId: 'out-senopati',
-        localStorageBytes: 428400, // ~418 KB
-        estimatedQuotaBytes: 5242880, // 5 MB
+        localStorageBytes: 420000,
+        estimatedQuotaBytes: 5242880,
         unSyncedTransactionsCount: 0,
         integrityOk: true,
-        lastSyncAt: Date.now() - 1000 * 90,
+        lastSyncAt: Date.now() - 1000 * 120,
       },
     },
     modules: {
@@ -158,6 +371,10 @@ export const INITIAL_TENANTS: TenantStore[] = [
     ownerEmail: 'dimas@titiktemu.id',
     subscriptionTier: 'pro',
     billingStatus: 'active',
+    billingCycle: 'monthly',
+    monthlyFee: 949000, // Pro + 1 extra outlet
+    lifetimePaid: 3946000,
+    autoRenew: true,
     subscriptionValidUntil: Date.now() + 1000 * 60 * 60 * 24 * 45,
     maxOutlets: 3,
     maxTerminals: 6,
@@ -197,7 +414,7 @@ export const INITIAL_TENANTS: TenantStore[] = [
           isCharging: false,
           networkLatencyMs: 48,
           lastHeartbeatAt: Date.now() - 1000 * 30,
-          appVersion: 'v2.4.0-prod',
+          appVersion: 'v2.5.0-prod',
         },
       ],
       printers: [
@@ -250,6 +467,10 @@ export const INITIAL_TENANTS: TenantStore[] = [
     ownerEmail: 'hendra@bakmiwarisan.com',
     subscriptionTier: 'pro',
     billingStatus: 'past_due',
+    billingCycle: 'monthly',
+    monthlyFee: 799000,
+    lifetimePaid: 4794000,
+    autoRenew: false,
     subscriptionValidUntil: Date.now() - 1000 * 60 * 60 * 24 * 2, // 2 days past due
     maxOutlets: 2,
     maxTerminals: 4,
@@ -277,8 +498,8 @@ export const INITIAL_TENANTS: TenantStore[] = [
           browser: 'Chrome 118.0',
           screenResolution: '1920x1080',
           networkLatencyMs: 310,
-          lastHeartbeatAt: Date.now() - 1000 * 800, // 13m ago
-          appVersion: 'v2.3.2', // Outdated version
+          lastHeartbeatAt: Date.now() - 1000 * 800,
+          appVersion: 'v2.4.2-stable',
         },
       ],
       printers: [
@@ -295,11 +516,11 @@ export const INITIAL_TENANTS: TenantStore[] = [
       ],
       storage: {
         outletId: 'out-pasarbaru',
-        localStorageBytes: 3950000, // Near 4 MB!
+        localStorageBytes: 3950000,
         estimatedQuotaBytes: 5242880,
-        unSyncedTransactionsCount: 14, // 14 stuck transactions!
+        unSyncedTransactionsCount: 14,
         integrityOk: false,
-        lastSyncAt: Date.now() - 1000 * 3600 * 3, // 3 hours ago
+        lastSyncAt: Date.now() - 1000 * 3600 * 3,
       },
     },
     modules: {
@@ -322,7 +543,7 @@ export const INITIAL_TENANTS: TenantStore[] = [
     updatedAt: Date.now(),
   },
   {
-    id: 'tenant-sushi-mori',
+    id: 'tenant-fine-dining',
     slug: 'mori-dining',
     name: 'Mori Japanese Dining & Izakaya',
     legalName: 'PT Mori Boga Sukses',
@@ -331,6 +552,10 @@ export const INITIAL_TENANTS: TenantStore[] = [
     ownerEmail: 'rahma@moridining.com',
     subscriptionTier: 'enterprise',
     billingStatus: 'active',
+    billingCycle: 'annually',
+    monthlyFee: 1999000,
+    lifetimePaid: 42380000,
+    autoRenew: true,
     subscriptionValidUntil: Date.now() + 1000 * 60 * 60 * 24 * 320,
     maxOutlets: 5,
     maxTerminals: 15,
@@ -361,7 +586,7 @@ export const INITIAL_TENANTS: TenantStore[] = [
           isCharging: true,
           networkLatencyMs: 15,
           lastHeartbeatAt: Date.now() - 1000 * 15,
-          appVersion: 'v2.4.0-prod',
+          appVersion: 'v2.5.0-prod',
         },
       ],
       printers: [
@@ -414,6 +639,10 @@ export const INITIAL_TENANTS: TenantStore[] = [
     ownerEmail: 'arif@kopibooth.id',
     subscriptionTier: 'starter',
     billingStatus: 'trial',
+    billingCycle: 'monthly',
+    monthlyFee: 299000,
+    lifetimePaid: 0,
+    autoRenew: false,
     subscriptionValidUntil: Date.now() + 1000 * 60 * 60 * 24 * 12,
     maxOutlets: 1,
     maxTerminals: 1,
@@ -443,8 +672,8 @@ export const INITIAL_TENANTS: TenantStore[] = [
           batteryLevel: 15,
           isCharging: false,
           networkLatencyMs: 0,
-          lastHeartbeatAt: Date.now() - 1000 * 60 * 60 * 18, // 18 hours ago
-          appVersion: 'v2.4.0-prod',
+          lastHeartbeatAt: Date.now() - 1000 * 60 * 60 * 18,
+          appVersion: 'v2.5.0-prod',
         },
       ],
       printers: [
@@ -571,21 +800,21 @@ export const INITIAL_STAFF_AUDIT_LOGS: StaffAuditLog[] = [
     id: 'audit-001',
     staffEmail: 'ops@hallogroup.id',
     staffName: 'Akmal Irsyad (Lead Ops)',
-    action: 'TENANT_PROVISIONED',
-    targetTenantId: 'org-resto',
-    targetTenantName: 'Nusantara Bistro',
-    details: 'Menerbitkan lisensi Paket Enterprise dengan 10 kuota cabang.',
-    timestamp: Date.now() - 1000 * 60 * 60 * 24 * 60,
+    action: 'INVOICE_GENERATED',
+    targetTenantId: 'tenant-kopi-artisan',
+    targetTenantName: 'Kopi Titik Temu',
+    details: 'Menerbitkan faktur INV/2026/10/003 (Rp 949.000) untuk perpanjangan Pro + 1 Extra Cabang Kemang.',
+    timestamp: Date.now() - 1000 * 60 * 60 * 24 * 2,
   },
   {
     id: 'audit-002',
     staffEmail: 'support@hallogroup.id',
-    staffName: 'Support Engineering',
-    action: 'REMOTE_CONFIG_PATCH',
-    targetTenantId: 'tenant-kopi-artisan',
-    targetTenantName: 'Kopi Titik Temu',
-    details: 'Mengaktifkan modul batch_production_roasting atas permintaan owner.',
-    timestamp: Date.now() - 1000 * 60 * 60 * 48,
+    staffName: 'Finance Hallo Group',
+    action: 'SUBSCRIPTION_EXTENDED',
+    targetTenantId: 'org-resto',
+    targetTenantName: 'Nusantara Bistro',
+    details: 'Memperpanjang masa aktif lisensi Enterprise hingga 180 hari ke depan paska settlement invoice.',
+    timestamp: Date.now() - 1000 * 60 * 60 * 24 * 28,
   },
 ]
 
@@ -599,9 +828,10 @@ export const INITIAL_PROVISIONING_REQUESTS: ProvisioningRequest[] = [
     ownerEmail: 'bambang@satesenayan.id',
     requestedTier: 'enterprise',
     requestedOutlets: 4,
+    billingCycle: 'annually',
     notes: 'Klien inbound dari website Hallo Group. Membutuhkan integrasi 4 cabang di Jakarta Selatan.',
     status: 'pending_review',
-    submittedAt: Date.now() - 1000 * 60 * 120, // 2h ago
+    submittedAt: Date.now() - 1000 * 60 * 120,
   },
   {
     id: 'req-002',
@@ -611,8 +841,9 @@ export const INITIAL_PROVISIONING_REQUESTS: ProvisioningRequest[] = [
     ownerEmail: 'reza@kopisenja.com',
     requestedTier: 'starter',
     requestedOutlets: 1,
+    billingCycle: 'monthly',
     notes: 'Mendaftar via landing page self-registration gratis trial 14 hari.',
     status: 'pending_review',
-    submittedAt: Date.now() - 1000 * 60 * 340, // 5.6h ago
+    submittedAt: Date.now() - 1000 * 60 * 340,
   },
 ]

@@ -15,8 +15,17 @@ import {
   BatteryCharging,
   Zap,
   ExternalLink,
+  CreditCard,
+  Clock,
+  Receipt,
+  RotateCw,
 } from 'lucide-react'
-import type { TenantStore, RemoteLogEntry } from '../types/fleet'
+import type { TenantStore, RemoteLogEntry, TenantInvoice } from '../types/fleet'
+import {
+  getTenantInvoices,
+  extendTenantSubscription,
+  markInvoiceAsPaid,
+} from '../lib/fleet/telemetryStore'
 
 interface TenantDeepInspectorModalProps {
   tenant: TenantStore
@@ -42,10 +51,11 @@ export default function TenantDeepInspectorModal({
   onLaunchShadowMode,
 }: TenantDeepInspectorModalProps) {
   const [activeTab, setActiveTab] = useState<
-    'telemetry' | 'storage' | 'logs' | 'remediation' | 'shadow'
+    'telemetry' | 'storage' | 'logs' | 'remediation' | 'billing' | 'shadow'
   >('telemetry')
 
   const [commandFeedback, setCommandFeedback] = useState<string | null>(null)
+  const [invoices, setInvoices] = useState<TenantInvoice[]>(() => getTenantInvoices(tenant.id))
 
   // Config patch state
   const [patchTier, setPatchTier] = useState(tenant.subscriptionTier)
@@ -56,6 +66,47 @@ export default function TenantDeepInspectorModal({
 
   const tenantLogs = logs.filter((l) => l.tenantId === tenant.id)
   const telemetry = tenant.latestTelemetry
+
+  function handleExtendValidity(days: number) {
+    extendTenantSubscription(tenant.id, days)
+    const newValidUntil = Math.max(tenant.subscriptionValidUntil, Date.now()) + 1000 * 60 * 60 * 24 * days
+    const updated: TenantStore = {
+      ...tenant,
+      subscriptionValidUntil: newValidUntil,
+      billingStatus: 'active',
+      updatedAt: Date.now(),
+    }
+    onUpdateTenant(updated)
+    setCommandFeedback(`Masa aktif lisensi toko diperpanjang +${days} hari.`)
+    setTimeout(() => setCommandFeedback(null), 4000)
+  }
+
+  function handleSettleInvoice(invId: string) {
+    markInvoiceAsPaid(invId, 'bank_transfer')
+    setInvoices(getTenantInvoices(tenant.id))
+    const updated: TenantStore = {
+      ...tenant,
+      billingStatus: 'active',
+      subscriptionValidUntil: Math.max(tenant.subscriptionValidUntil, Date.now()) + 1000 * 60 * 60 * 24 * 30,
+      lifetimePaid: (tenant.lifetimePaid || 0) + (invoices.find((i) => i.id === invId)?.amount || 0),
+      updatedAt: Date.now(),
+    }
+    onUpdateTenant(updated)
+    setCommandFeedback('Faktur berhasil diselesaikan dan masa aktif diperpanjang 30 hari.')
+    setTimeout(() => setCommandFeedback(null), 4000)
+  }
+
+  function handleToggleSuspend() {
+    const nextStatus = tenant.billingStatus === 'suspended' ? 'active' : 'suspended'
+    const updated: TenantStore = {
+      ...tenant,
+      billingStatus: nextStatus,
+      updatedAt: Date.now(),
+    }
+    onUpdateTenant(updated)
+    setCommandFeedback(nextStatus === 'suspended' ? 'Akses toko berhasil ditangguhkan (Suspended).' : 'Akses toko telah diaktifkan kembali.')
+    setTimeout(() => setCommandFeedback(null), 4000)
+  }
 
   function handleExecuteRemoteCommand(commandType: string, label: string, payload?: any) {
     onQueueCommand(tenant.id, commandType as any, payload)
@@ -164,6 +215,7 @@ export default function TenantDeepInspectorModal({
               icon: Terminal,
             },
             { id: 'remediation', label: 'Remote Remediasi', icon: Wrench },
+            { id: 'billing', label: `Paket & Lisensi (${invoices.length})`, icon: CreditCard },
             { id: 'shadow', label: 'Shadow Inspector', icon: Eye },
           ].map((tb) => {
             const Icon = tb.icon
@@ -681,7 +733,231 @@ export default function TenantDeepInspectorModal({
             </div>
           )}
 
-          {/* 5. SHADOW MODE */}
+          {/* 5. PAKET & LISENSI SAAS */}
+          {activeTab === 'billing' && (
+            <div className="space-y-4">
+              {/* SUBSCRIPTION STATUS STRIP */}
+              <div className="bg-white rounded-lg border border-zinc-200 p-4 space-y-3">
+                <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
+                  <div>
+                    <h3 className="font-semibold text-xs text-zinc-900 flex items-center gap-1.5">
+                      <CreditCard size={14} className="text-zinc-600" />
+                      <span>Status Paket & Siklus Penagihan</span>
+                    </h3>
+                    <div className="text-[11px] text-zinc-500 font-mono mt-0.5">
+                      ID Toko: {tenant.id} · Domain: {tenant.slug}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-[10px] font-mono font-medium px-2 py-0.5 rounded border uppercase ${
+                        tenant.billingStatus === 'active'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                          : tenant.billingStatus === 'trial'
+                          ? 'bg-sky-50 text-sky-700 border-sky-200'
+                          : tenant.billingStatus === 'overdue'
+                          ? 'bg-rose-50 text-rose-700 border-rose-200'
+                          : 'bg-zinc-100 text-zinc-700 border-zinc-200'
+                      }`}
+                    >
+                      {tenant.billingStatus.toUpperCase()}
+                    </span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-100 text-zinc-800 border border-zinc-200 uppercase font-semibold">
+                      TIER: {tenant.subscriptionTier}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  <div className="p-2.5 rounded bg-zinc-50 border border-zinc-100">
+                    <span className="text-[10px] text-zinc-400 block font-mono">TARIF BULANAN</span>
+                    <span className="font-semibold text-zinc-900 font-mono">
+                      Rp {(tenant.monthlyFee || (tenant.subscriptionTier === 'enterprise' ? 1999000 : tenant.subscriptionTier === 'pro' ? 799000 : 299000)).toLocaleString('id-ID')}
+                    </span>
+                    <span className="text-[10px] text-zinc-500 block capitalize">
+                      {tenant.billingCycle || 'monthly'}
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded bg-zinc-50 border border-zinc-100">
+                    <span className="text-[10px] text-zinc-400 block font-mono">MASA BERLAKU</span>
+                    <span className="font-semibold text-zinc-900 font-mono">
+                      {new Date(tenant.subscriptionValidUntil).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </span>
+                    {(() => {
+                      const days = Math.ceil(
+                        (tenant.subscriptionValidUntil - Date.now()) / (1000 * 60 * 60 * 24)
+                      )
+                      return (
+                        <span
+                          className={`text-[10px] font-mono block ${
+                            days <= 0
+                              ? 'text-rose-600 font-semibold'
+                              : days <= 14
+                              ? 'text-amber-600 font-semibold'
+                              : 'text-zinc-500'
+                          }`}
+                        >
+                          {days <= 0 ? `Lewat ${Math.abs(days)} hari` : `Sisa ${days} hari lagi`}
+                        </span>
+                      )
+                    })()}
+                  </div>
+
+                  <div className="p-2.5 rounded bg-zinc-50 border border-zinc-100">
+                    <span className="text-[10px] text-zinc-400 block font-mono">TOTAL PEMBAYARAN LTV</span>
+                    <span className="font-semibold text-emerald-700 font-mono">
+                      Rp {(tenant.lifetimePaid || 0).toLocaleString('id-ID')}
+                    </span>
+                    <span className="text-[10px] text-zinc-500 block font-mono">
+                      Total penerimaan
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded bg-zinc-50 border border-zinc-100">
+                    <span className="text-[10px] text-zinc-400 block font-mono">AUTO RENEW</span>
+                    <span className="font-semibold text-zinc-800 font-mono">
+                      {tenant.autoRenew ? 'AKTIF' : 'MANUAL'}
+                    </span>
+                    <span className="text-[10px] text-zinc-500 block">
+                      Perpanjangan invoice
+                    </span>
+                  </div>
+                </div>
+
+                {/* QUICK ACTION BUTTONS */}
+                <div className="pt-2 border-t border-zinc-100 flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[11px] text-zinc-500 font-medium">Tindakan Lisensi:</span>
+                    <button
+                      type="button"
+                      onClick={() => handleExtendValidity(30)}
+                      className="px-2.5 py-1 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-medium text-xs font-mono transition-colors cursor-pointer border border-zinc-200"
+                    >
+                      +30 Hari (1 Bulan)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleExtendValidity(365)}
+                      className="px-2.5 py-1 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-800 font-medium text-xs font-mono transition-colors cursor-pointer border border-zinc-200"
+                    >
+                      +365 Hari (1 Tahun)
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleToggleSuspend}
+                    className={`px-2.5 py-1 rounded font-medium text-xs transition-colors cursor-pointer ${
+                      tenant.billingStatus === 'suspended'
+                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                        : 'bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200'
+                    }`}
+                  >
+                    {tenant.billingStatus === 'suspended' ? 'Aktifkan Kembali Toko' : 'Tangguhkan Toko (Suspend)'}
+                  </button>
+                </div>
+              </div>
+
+              {/* INVOICE HISTORY TABLE */}
+              <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-zinc-200 flex items-center justify-between bg-zinc-50/50">
+                  <div className="flex items-center gap-1.5">
+                    <Receipt size={14} className="text-zinc-600" />
+                    <span className="font-semibold text-xs text-zinc-900">
+                      Riwayat Faktur & Pembayaran ({invoices.length})
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-zinc-400">
+                    HISTORI PENAGIHAN
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-zinc-200 bg-zinc-50/80 text-[10px] font-mono text-zinc-500 uppercase">
+                        <th className="py-2 px-3 font-semibold">No. Faktur</th>
+                        <th className="py-2 px-3 font-semibold">Deskripsi / Periode</th>
+                        <th className="py-2 px-3 font-semibold text-right">Nominal</th>
+                        <th className="py-2 px-3 font-semibold">Jatuh Tempo</th>
+                        <th className="py-2 px-3 font-semibold">Metode</th>
+                        <th className="py-2 px-3 font-semibold text-center">Status</th>
+                        <th className="py-2 px-3 font-semibold text-right">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100">
+                      {invoices.length > 0 ? (
+                        invoices.map((inv) => (
+                          <tr key={inv.id} className="hover:bg-zinc-50/60 font-mono text-[11px]">
+                            <td className="py-2.5 px-3 font-semibold text-zinc-900">
+                              {inv.invoiceNumber}
+                            </td>
+                            <td className="py-2.5 px-3 text-zinc-700 font-sans">
+                              <div>{inv.billingCycle === 'annually' ? 'Langganan Tahunan' : 'Langganan Bulanan'}</div>
+                              <div className="text-[10px] text-zinc-400 font-mono">
+                                {inv.items.map((i) => i.description).join(', ')}
+                              </div>
+                            </td>
+                            <td className="py-2.5 px-3 font-semibold text-zinc-900 text-right">
+                              Rp {inv.amount.toLocaleString('id-ID')}
+                            </td>
+                            <td className="py-2.5 px-3 text-zinc-500">
+                              {new Date(inv.dueDate).toLocaleDateString('id-ID')}
+                            </td>
+                            <td className="py-2.5 px-3 text-zinc-600 uppercase">
+                              {inv.paymentMethod}
+                            </td>
+                            <td className="py-2.5 px-3 text-center">
+                              <span
+                                className={`px-1.5 py-0.2 rounded text-[9px] uppercase font-semibold border ${
+                                  inv.status === 'paid'
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                    : inv.status === 'overdue'
+                                    ? 'bg-rose-50 text-rose-700 border-rose-200'
+                                    : 'bg-amber-50 text-amber-700 border-amber-200'
+                                }`}
+                              >
+                                {inv.status}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 text-right">
+                              {inv.status !== 'paid' ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSettleInvoice(inv.id)}
+                                  className="px-2 py-0.5 rounded bg-emerald-500 hover:bg-emerald-600 text-white font-sans text-[10px] font-medium transition-colors cursor-pointer"
+                                >
+                                  Tandai Lunas
+                                </button>
+                              ) : (
+                                <span className="text-[10px] text-zinc-400">
+                                  {inv.paidAt ? new Date(inv.paidAt).toLocaleDateString('id-ID') : 'Terbayar'}
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="p-4 text-center text-zinc-400 font-sans">
+                            Belum ada faktur yang diterbitkan untuk toko ini.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 6. SHADOW MODE */}
           {activeTab === 'shadow' && (
             <div className="p-5 rounded-lg border border-zinc-200 bg-white space-y-3">
               <div className="text-xs font-semibold text-zinc-900">

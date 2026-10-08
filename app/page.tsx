@@ -9,6 +9,9 @@ import TenantDirectoryTab from '../components/TenantDirectoryTab'
 import TenantDeepInspectorModal from '../components/TenantDeepInspectorModal'
 import ProvisioningTab from '../components/ProvisioningTab'
 import AuditLogTab from '../components/AuditLogTab'
+import BillingTab from '../components/BillingTab'
+import DatabaseBackupsTab from '../components/DatabaseBackupsTab'
+import RolloutTab from '../components/RolloutTab'
 
 import {
   getFleetTenants,
@@ -22,6 +25,15 @@ import {
   rejectProvisioningRequest,
   getStaffAuditLogs,
   calculateFleetStats,
+  getTenantInvoices,
+  createTenantInvoice,
+  markInvoiceAsPaid,
+  calculateSaaSFinanceOverview,
+  extendTenantSubscription,
+  getDatabaseBackupJobs,
+  triggerTenantBackup,
+  getAppRolloutStatuses,
+  triggerAppRollout,
 } from '../lib/fleet/telemetryStore'
 
 import {
@@ -29,6 +41,9 @@ import {
   INITIAL_REMOTE_LOGS,
   INITIAL_STAFF_AUDIT_LOGS,
   INITIAL_PROVISIONING_REQUESTS,
+  INITIAL_INVOICES,
+  INITIAL_BACKUPS,
+  INITIAL_ROLLOUTS,
 } from '../lib/fleet/mockRealTenants'
 
 import type {
@@ -37,6 +52,10 @@ import type {
   RemoteRepairCommand,
   ProvisioningRequest,
   StaffAuditLog,
+  TenantInvoice,
+  DatabaseBackupJob,
+  ClientAppRolloutStatus,
+  PaymentMethod,
 } from '../types/fleet'
 
 import { Terminal, Wrench, Zap, CheckCircle2 } from 'lucide-react'
@@ -45,12 +64,15 @@ export default function FleetOpsApp() {
   const [activeTab, setActiveTab] = useState<ActiveOpsTab>('overview')
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false)
 
-  // STORE STATE (Initialized with initial tenants for immediate SSR hydration)
+  // STORE STATE (Initialized with initial data for immediate SSR hydration)
   const [tenants, setTenants] = useState<TenantStore[]>(INITIAL_TENANTS)
   const [logs, setLogs] = useState<RemoteLogEntry[]>(INITIAL_REMOTE_LOGS)
   const [commands, setCommands] = useState<RemoteRepairCommand[]>([])
   const [requests, setRequests] = useState<ProvisioningRequest[]>(INITIAL_PROVISIONING_REQUESTS)
   const [auditLogs, setAuditLogs] = useState<StaffAuditLog[]>(INITIAL_STAFF_AUDIT_LOGS)
+  const [invoices, setInvoices] = useState<TenantInvoice[]>(INITIAL_INVOICES)
+  const [backups, setBackups] = useState<DatabaseBackupJob[]>(INITIAL_BACKUPS)
+  const [rollouts, setRollouts] = useState<ClientAppRolloutStatus[]>(INITIAL_ROLLOUTS)
 
   const [selectedTenantForModal, setSelectedTenantForModal] = useState<TenantStore | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -63,12 +85,18 @@ export default function FleetOpsApp() {
     const c = getRemoteCommands()
     const r = getProvisioningRequests()
     const a = getStaffAuditLogs()
+    const inv = getTenantInvoices()
+    const b = getDatabaseBackupJobs()
+    const rol = getAppRolloutStatuses()
 
     setTenants(t)
     setLogs(l)
     setCommands(c)
     setRequests(r)
     setAuditLogs(a)
+    setInvoices(inv)
+    setBackups(b)
+    setRollouts(rol)
 
     setTimeout(() => {
       setIsRefreshing(false)
@@ -80,6 +108,10 @@ export default function FleetOpsApp() {
   }, [])
 
   const stats = useMemo(() => calculateFleetStats(tenants), [tenants])
+  const financeOverview = useMemo(
+    () => calculateSaaSFinanceOverview(tenants, invoices),
+    [tenants, invoices]
+  )
 
   function handleUpdateTenant(updated: TenantStore) {
     updateTenant(updated)
@@ -133,6 +165,10 @@ export default function FleetOpsApp() {
       ownerEmail: newTenant.ownerEmail || '-',
       subscriptionTier: newTenant.subscriptionTier || 'pro',
       billingStatus: 'active',
+      billingCycle: newTenant.billingCycle || 'monthly',
+      monthlyFee: newTenant.monthlyFee || 799000,
+      lifetimePaid: newTenant.lifetimePaid || 0,
+      autoRenew: newTenant.autoRenew ?? true,
       subscriptionValidUntil: newTenant.subscriptionValidUntil || Date.now() + 1000 * 60 * 60 * 24 * 365,
       maxOutlets: newTenant.maxOutlets || 2,
       maxTerminals: newTenant.maxTerminals || 4,
@@ -186,6 +222,48 @@ export default function FleetOpsApp() {
     }
   }
 
+  function handleExtendSubscription(tenantId: string, days: number) {
+    extendTenantSubscription(tenantId, days)
+    const tList = getFleetTenants()
+    setTenants(tList)
+    if (selectedTenantForModal?.id === tenantId) {
+      const updated = tList.find((x) => x.id === tenantId)
+      if (updated) setSelectedTenantForModal(updated)
+    }
+    setActionNotice(`Masa aktif langganan toko diperpanjang +${days} hari.`)
+    setTimeout(() => setActionNotice(null), 4000)
+  }
+
+  function handleMarkInvoicePaid(invoiceId: string, method?: PaymentMethod) {
+    markInvoiceAsPaid(invoiceId, method || 'qris')
+    setInvoices(getTenantInvoices())
+    setTenants(getFleetTenants())
+    setAuditLogs(getStaffAuditLogs())
+    setActionNotice('Faktur berhasil diselesaikan & lisensi otomatis diperbarui!')
+    setTimeout(() => setActionNotice(null), 4000)
+  }
+
+  function handleCreateInvoice(data: any) {
+    createTenantInvoice(data)
+    setInvoices(getTenantInvoices())
+    setAuditLogs(getStaffAuditLogs())
+    setActionNotice('Faktur tagihan baru berhasil diterbitkan untuk klien!')
+    setTimeout(() => setActionNotice(null), 4000)
+  }
+
+  function handleTriggerBackup(tenantId: string) {
+    triggerTenantBackup(tenantId)
+    setBackups(getDatabaseBackupJobs())
+    setAuditLogs(getStaffAuditLogs())
+  }
+
+  function handleBroadcastRollout(version: string, channel: 'production' | 'canary') {
+    triggerAppRollout(version, channel)
+    setRollouts(getAppRolloutStatuses())
+    setAuditLogs(getStaffAuditLogs())
+    setCommands(getRemoteCommands())
+  }
+
   return (
     <AuthGate>
       <div className="min-h-screen bg-[#FAFAFA] flex flex-col text-zinc-900">
@@ -213,6 +291,7 @@ export default function FleetOpsApp() {
             setActiveTab={setActiveTab}
             openIncidentsCount={stats.openIncidentsCount}
             pendingRequestsCount={requests.filter((r) => r.status === 'pending_review').length}
+            pendingInvoicesCount={invoices.filter((i) => i.status === 'pending' || i.status === 'overdue').length}
             isCollapsed={isCollapsed}
             setIsCollapsed={setIsCollapsed}
           />
@@ -235,6 +314,17 @@ export default function FleetOpsApp() {
                 onInspectTenant={(t) => setSelectedTenantForModal(t)}
                 onOpenRemediation={handleOpenRemediation}
                 onLaunchShadowMode={handleLaunchShadowMode}
+              />
+            )}
+
+            {activeTab === 'billing' && (
+              <BillingTab
+                tenants={tenants}
+                invoices={invoices}
+                finance={financeOverview}
+                onExtendSubscription={handleExtendSubscription}
+                onMarkInvoicePaid={handleMarkInvoicePaid}
+                onCreateInvoice={handleCreateInvoice}
               />
             )}
 
@@ -466,6 +556,22 @@ export default function FleetOpsApp() {
                 onApproveRequest={handleApproveRequest}
                 onRejectRequest={handleRejectRequest}
                 onCreateTenant={handleCreateTenant}
+              />
+            )}
+
+            {activeTab === 'backups' && (
+              <DatabaseBackupsTab
+                tenants={tenants}
+                backups={backups}
+                onTriggerBackup={handleTriggerBackup}
+              />
+            )}
+
+            {activeTab === 'rollout' && (
+              <RolloutTab
+                rollouts={rollouts}
+                tenants={tenants}
+                onBroadcastRollout={handleBroadcastRollout}
               />
             )}
 

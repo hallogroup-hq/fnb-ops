@@ -2,7 +2,55 @@ export type HealthStatus = 'healthy' | 'warning' | 'critical' | 'offline'
 
 export type SubscriptionTier = 'starter' | 'pro' | 'enterprise'
 
-export type BillingStatus = 'active' | 'trial' | 'grace_period' | 'past_due' | 'suspended'
+export type BillingStatus = 'active' | 'trial' | 'grace_period' | 'past_due' | 'suspended' | 'overdue'
+
+export type BillingCycle = 'monthly' | 'annually'
+
+export type PaymentMethod =
+  | 'va_bca'
+  | 'va_mandiri'
+  | 'qris'
+  | 'manual_transfer'
+  | 'credit_card'
+  | 'bank_transfer'
+
+export type InvoiceStatus = 'paid' | 'pending' | 'overdue' | 'cancelled'
+
+export interface InvoiceLineItem {
+  description: string
+  quantity: number
+  unitPrice: number
+  subtotal: number
+}
+
+export interface TenantInvoice {
+  id: string
+  invoiceNumber: string
+  tenantId: string
+  tenantName: string
+  planTier: SubscriptionTier
+  billingCycle: BillingCycle
+  amount: number
+  status: InvoiceStatus
+  issuedAt: number
+  dueDate: number
+  paidAt?: number
+  paymentMethod?: PaymentMethod
+  items: InvoiceLineItem[]
+  notes?: string
+}
+
+export interface SaaSFinanceOverview {
+  mrr: number // Monthly Recurring Revenue
+  arr: number // Annual Recurring Revenue
+  totalCollectedThisMonth: number
+  pendingReceivables: number // Piutang belum terbayar
+  overdueAmount: number
+  arpu: number // Average Revenue Per User
+  activeSubscriptionsCount: number
+  expiringIn30DaysCount: number
+  churnRatePct: number
+}
 
 export interface DeviceTelemetry {
   deviceId: string
@@ -61,6 +109,8 @@ export type RemoteCommandType =
   | 'EMERGENCY_MAINTENANCE_TOGGLE'
   | 'PATCH_CONFIG'
   | 'UPDATE_SUBSCRIPTION'
+  | 'FORCE_OTA_RELOAD'
+  | 'TRIGGER_DB_SNAPSHOT'
 
 export interface RemoteRepairCommand {
   id: string
@@ -85,6 +135,29 @@ export interface OutletFleetSummary {
   todayOrdersCount: number
 }
 
+export interface DatabaseBackupJob {
+  id: string
+  tenantId: string
+  tenantName: string
+  snapshotSizeMb: number
+  totalRecordsCount: number
+  status: 'completed' | 'in_progress' | 'failed'
+  createdAt: number
+  checksum: string
+  retentionDays: number
+}
+
+export interface ClientAppRolloutStatus {
+  version: string
+  releaseChannel: 'production' | 'canary' | 'beta'
+  isLatest: boolean
+  releaseDate: string
+  activeTenantsCount: number
+  activeTerminalsCount: number
+  adoptionPct: number
+  notes: string
+}
+
 export interface TenantStore {
   id: string
   slug: string
@@ -95,6 +168,10 @@ export interface TenantStore {
   ownerEmail: string
   subscriptionTier: SubscriptionTier
   billingStatus: BillingStatus
+  billingCycle?: BillingCycle
+  monthlyFee?: number
+  lifetimePaid?: number
+  autoRenew?: boolean
   subscriptionValidUntil: number
   maxOutlets: number
   maxTerminals: number
@@ -108,6 +185,7 @@ export interface TenantStore {
   }
   modules: Record<string, boolean>
   emergencyMaintenance: boolean
+  invoices?: TenantInvoice[]
   createdAt: number
   updatedAt: number
 }
@@ -121,6 +199,7 @@ export interface ProvisioningRequest {
   ownerEmail: string
   requestedTier: SubscriptionTier
   requestedOutlets: number
+  billingCycle?: BillingCycle
   notes?: string
   status: 'pending_review' | 'approved' | 'rejected'
   submittedAt: number
