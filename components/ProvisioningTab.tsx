@@ -72,7 +72,7 @@ export default function ProvisioningTab({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full min-w-0">
       {/* 1. SELF-REGISTRATION APPROVAL QUEUE */}
       <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
         <div className="px-4 py-3 border-b border-zinc-200 flex items-center justify-between bg-zinc-50/50">

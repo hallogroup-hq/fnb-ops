@@ -9,7 +9,7 @@ interface AuditLogTabProps {
 
 export default function AuditLogTab({ logs }: AuditLogTabProps) {
   return (
-    <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+    <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden w-full min-w-0">
       <div className="px-4 py-3 border-b border-zinc-200 flex items-center justify-between bg-zinc-50/50">
         <div>
           <h2 className="font-semibold text-xs text-zinc-900">

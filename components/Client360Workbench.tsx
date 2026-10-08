@@ -208,11 +208,11 @@ export default function Client360Workbench({
   )
 
   return (
-    <div className="flex flex-col lg:flex-row items-start gap-4">
+    <div className="w-full min-w-0 flex flex-col lg:flex-row items-start gap-3.5">
       {/* ------------------------------------------------------------- */}
       {/* 1. LEFT PANE: CLIENT DIRECTORY STRIP (MASTER LIST)             */}
       {/* ------------------------------------------------------------- */}
-      <div className="w-full lg:w-72 shrink-0 bg-white border border-zinc-200 rounded-lg overflow-hidden flex flex-col">
+      <div className="w-full lg:w-64 xl:w-72 shrink-0 bg-white border border-zinc-200 rounded-lg overflow-hidden flex flex-col">
         {/* DIRECTORY HEADER & SEARCH */}
         <div className="p-3 border-b border-zinc-200 space-y-2 bg-zinc-50/50">
           <div className="flex items-center justify-between">
@@ -345,19 +345,19 @@ export default function Client360Workbench({
       {/* ------------------------------------------------------------- */}
       {/* 2. RIGHT PANE: CLIENT 360° WORKSPACE (FOCUSED ACTIVE TENANT)   */}
       {/* ------------------------------------------------------------- */}
-      <div className="flex-1 w-full bg-white border border-zinc-200 rounded-lg overflow-hidden flex flex-col">
+      <div className="flex-1 min-w-0 w-full bg-white border border-zinc-200 rounded-lg overflow-hidden flex flex-col">
         {/* WORKBENCH TOP BAR */}
-        <div className="p-4 border-b border-zinc-200 bg-zinc-50/50 flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-base font-bold text-zinc-950 tracking-tight">
+        <div className="p-3.5 sm:p-4 border-b border-zinc-200 bg-zinc-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <h1 className="text-sm sm:text-base font-bold text-zinc-950 tracking-tight truncate">
                 {activeTenant.name}
               </h1>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200 uppercase font-semibold">
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200 uppercase font-semibold shrink-0">
                 TIER: {activeTenant.subscriptionTier}
               </span>
               <span
-                className={`text-[10px] font-mono font-medium px-2 py-0.5 rounded border uppercase ${
+                className={`text-[10px] font-mono font-medium px-2 py-0.5 rounded border uppercase shrink-0 whitespace-nowrap ${
                   activeTenant.healthStatus === 'healthy'
                     ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                     : activeTenant.healthStatus === 'warning'
@@ -370,18 +370,18 @@ export default function Client360Workbench({
                 {activeTenant.healthStatus.toUpperCase()}
               </span>
               {activeTenant.emergencyMaintenance && (
-                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-rose-600 text-white">
+                <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-rose-600 text-white shrink-0 whitespace-nowrap">
                   MAINTENANCE LOCK
                 </span>
               )}
             </div>
 
-            <div className="text-[11px] text-zinc-500 font-mono mt-1 flex items-center gap-2 flex-wrap">
-              <span>Domain: {activeTenant.slug}</span>
+            <div className="text-[11px] text-zinc-500 font-mono mt-1 flex items-center gap-1.5 sm:gap-2 flex-wrap">
+              <span className="truncate">Domain: {activeTenant.slug}</span>
               <span>·</span>
-              <span>Pemilik: {activeTenant.ownerName} ({activeTenant.ownerPhone})</span>
+              <span className="truncate">Pemilik: {activeTenant.ownerName} ({activeTenant.ownerPhone})</span>
               <span>·</span>
-              <span>ID: {activeTenant.id}</span>
+              <span className="truncate">ID: {activeTenant.id}</span>
             </div>
           </div>
 
@@ -390,22 +390,22 @@ export default function Client360Workbench({
             <button
               type="button"
               onClick={() => onLaunchShadowMode(activeTenant)}
-              className="px-3 py-1.5 rounded bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="px-2.5 sm:px-3 py-1.5 rounded bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
               title="Buka Toko Klien dengan otentikasi tim support (Shadow Mode)"
             >
               <Eye size={13} />
-              <span>Shadow Mode</span>
+              <span className="whitespace-nowrap">Shadow Mode</span>
             </button>
 
             <a
               href={activeTenant.liveStoreUrl}
               target="_blank"
               rel="noreferrer"
-              className="px-2.5 py-1.5 rounded border border-zinc-300 text-zinc-700 hover:bg-zinc-100 text-xs font-medium flex items-center gap-1.5 transition-colors"
+              className="px-2.5 py-1.5 rounded border border-zinc-300 text-zinc-700 hover:bg-zinc-100 text-xs font-medium flex items-center gap-1.5 transition-colors shrink-0"
               title="Buka Website Kasir Langsung"
             >
               <ExternalLink size={13} />
-              <span>Buka Toko</span>
+              <span className="whitespace-nowrap">Buka Toko</span>
             </a>
           </div>
         </div>
@@ -419,18 +419,18 @@ export default function Client360Workbench({
         )}
 
         {/* WORKBENCH SUB-TABS NAVIGATION */}
-        <div className="flex items-center gap-1 px-4 border-b border-zinc-200 bg-white overflow-x-auto shrink-0">
+        <div className="flex items-center gap-1 px-3 sm:px-4 border-b border-zinc-200 bg-white overflow-x-auto w-full min-w-0 shrink-0">
           {[
             { id: 'overview', label: `Cabang (${activeTenant.activeOutlets.length})`, icon: Store },
             { id: 'hardware', label: 'Hardware & Kasir', icon: Tablet },
             {
               id: 'staff',
-              label: `Staf Toko (${activeTenant.staffUsers?.length || 0})`,
+              label: `Staf (${activeTenant.staffUsers?.length || 0})`,
               icon: Users,
             },
             {
               id: 'data',
-              label: `Menu & Stok (${(activeTenant.inventoryItems?.filter((i) => i.isNegative).length || 0) > 0 ? 'Alert Minus!' : 'Normal'})`,
+              label: `Menu & Stok (${(activeTenant.inventoryItems?.filter((i) => i.isNegative).length || 0) > 0 ? 'Minus!' : 'Normal'})`,
               icon: UtensilsCrossed,
               highlight: (activeTenant.inventoryItems?.filter((i) => i.isNegative).length || 0) > 0,
             },
@@ -440,7 +440,7 @@ export default function Client360Workbench({
               icon: CreditCard,
               highlight: daysRemaining <= 7,
             },
-            { id: 'remediation', label: 'Remote Control & DB', icon: Wrench },
+            { id: 'remediation', label: 'Remote & DB', icon: Wrench },
             {
               id: 'logs',
               label: `Log Error (${tenantLogs.filter((l) => !l.resolved).length})`,
@@ -455,7 +455,7 @@ export default function Client360Workbench({
                 key={tb.id}
                 type="button"
                 onClick={() => setActiveSubTab(tb.id as any)}
-                className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors border-b-2 cursor-pointer whitespace-nowrap ${
+                className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-2 sm:py-2.5 text-xs font-medium transition-colors border-b-2 cursor-pointer whitespace-nowrap shrink-0 ${
                   isSel
                     ? 'border-zinc-950 text-zinc-950 font-semibold'
                     : tb.highlight
@@ -463,7 +463,7 @@ export default function Client360Workbench({
                     : 'border-transparent text-zinc-500 hover:text-zinc-800'
                 }`}
               >
-                <Icon size={14} />
+                <Icon size={14} className="shrink-0" />
                 <span>{tb.label}</span>
               </button>
             )
@@ -476,47 +476,47 @@ export default function Client360Workbench({
           {/* 1. OVERVIEW & CABANG (OUTLETS)                            */}
           {/* ========================================================= */}
           {activeSubTab === 'overview' && (
-            <div className="space-y-4">
+            <div className="space-y-4 w-full min-w-0">
               {/* STORE PROFILE METRICS STRIP */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                <div className="p-3 rounded-md border border-zinc-200 bg-zinc-50/50">
-                  <span className="text-[10px] text-zinc-400 font-mono block">GMV HARI INI</span>
-                  <span className="text-base font-bold text-zinc-900 font-mono">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 text-xs">
+                <div className="p-3 rounded-md border border-zinc-200 bg-zinc-50/50 min-w-0">
+                  <span className="text-[10px] text-zinc-400 font-mono block truncate">GMV HARI INI</span>
+                  <span className="text-base font-bold text-zinc-900 font-mono truncate block">
                     Rp {activeTenant.activeOutlets
                       .reduce((sum, o) => sum + (o.todayGmv || 0), 0)
                       .toLocaleString('id-ID')}
                   </span>
-                  <span className="text-[10px] text-zinc-500 block">Seluruh cabang aktif</span>
+                  <span className="text-[10px] text-zinc-500 block truncate">Seluruh cabang aktif</span>
                 </div>
 
-                <div className="p-3 rounded-md border border-zinc-200 bg-zinc-50/50">
-                  <span className="text-[10px] text-zinc-400 font-mono block">PESANAN HARI INI</span>
-                  <span className="text-base font-bold text-zinc-900 font-mono">
+                <div className="p-3 rounded-md border border-zinc-200 bg-zinc-50/50 min-w-0">
+                  <span className="text-[10px] text-zinc-400 font-mono block truncate">PESANAN HARI INI</span>
+                  <span className="text-base font-bold text-zinc-900 font-mono truncate block">
                     {activeTenant.activeOutlets.reduce(
                       (sum, o) => sum + (o.todayOrdersCount || 0),
                       0
                     )}{' '}
                     Transaksi
                   </span>
-                  <span className="text-[10px] text-zinc-500 block">Volume penjualan</span>
+                  <span className="text-[10px] text-zinc-500 block truncate">Volume penjualan</span>
                 </div>
 
-                <div className="p-3 rounded-md border border-zinc-200 bg-zinc-50/50">
-                  <span className="text-[10px] text-zinc-400 font-mono block">MASA AKTIF LISENSI</span>
-                  <span className="text-base font-bold text-zinc-900 font-mono">
+                <div className="p-3 rounded-md border border-zinc-200 bg-zinc-50/50 min-w-0">
+                  <span className="text-[10px] text-zinc-400 font-mono block truncate">MASA AKTIF LISENSI</span>
+                  <span className="text-base font-bold text-zinc-900 font-mono truncate block">
                     {daysRemaining <= 0 ? 'Lewat Jatuh Tempo' : `${daysRemaining} Hari Lagi`}
                   </span>
-                  <span className="text-[10px] text-zinc-500 block">
+                  <span className="text-[10px] text-zinc-500 block truncate">
                     {new Date(activeTenant.subscriptionValidUntil).toLocaleDateString('id-ID')}
                   </span>
                 </div>
 
-                <div className="p-3 rounded-md border border-zinc-200 bg-zinc-50/50">
-                  <span className="text-[10px] text-zinc-400 font-mono block">KUOTA CABANG & KASIR</span>
-                  <span className="text-base font-bold text-zinc-900 font-mono">
+                <div className="p-3 rounded-md border border-zinc-200 bg-zinc-50/50 min-w-0">
+                  <span className="text-[10px] text-zinc-400 font-mono block truncate">KUOTA CABANG & KASIR</span>
+                  <span className="text-base font-bold text-zinc-900 font-mono truncate block">
                     {activeTenant.activeOutlets.length} / {activeTenant.maxOutlets} Cabang
                   </span>
-                  <span className="text-[10px] text-zinc-500 block">
+                  <span className="text-[10px] text-zinc-500 block truncate">
                     Maks {activeTenant.maxTerminals} Terminal
                   </span>
                 </div>
@@ -609,7 +609,7 @@ export default function Client360Workbench({
           {/* 2. HARDWARE & TERMINALS (TABLET, PRINTER, KDS)            */}
           {/* ========================================================= */}
           {activeSubTab === 'hardware' && (
-            <div className="space-y-4">
+            <div className="space-y-4 w-full min-w-0">
               {/* POS TERMINALS */}
               <div>
                 <div className="text-xs font-semibold text-zinc-900 mb-2 flex items-center justify-between">
@@ -762,8 +762,8 @@ export default function Client360Workbench({
           {/* 3. STORE STAFF & CREDENTIALS (PIN RESET & ACCOUNTS)       */}
           {/* ========================================================= */}
           {activeSubTab === 'staff' && (
-            <div className="space-y-4">
-              <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+            <div className="space-y-4 w-full min-w-0">
+              <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden w-full min-w-0">
                 <div className="px-4 py-3 border-b border-zinc-200 bg-zinc-50/50 flex items-center justify-between">
                   <div>
                     <h3 className="font-semibold text-xs text-zinc-900 flex items-center gap-1.5">
@@ -779,8 +779,8 @@ export default function Client360Workbench({
                   </span>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full text-left text-xs min-w-[620px]">
                     <thead>
                       <tr className="border-b border-zinc-200 bg-zinc-50/80 text-[10px] font-mono text-zinc-500 uppercase">
                         <th className="py-2.5 px-3.5 font-semibold">Nama Staf</th>
@@ -870,9 +870,9 @@ export default function Client360Workbench({
           {/* 4. MENU, STOCK & LIVE ORDERS (DATA EXPLORER)              */}
           {/* ========================================================= */}
           {activeSubTab === 'data' && (
-            <div className="space-y-4">
+            <div className="space-y-4 w-full min-w-0">
               {/* INVENTORY RECONCILIATION STRIP */}
-              <div className="bg-white rounded-lg border border-zinc-200 p-4 space-y-3">
+              <div className="bg-white rounded-lg border border-zinc-200 p-4 space-y-3 w-full min-w-0">
                 <div className="flex items-center justify-between border-b border-zinc-100 pb-2.5">
                   <div>
                     <h3 className="font-semibold text-xs text-zinc-900 flex items-center gap-1.5">
@@ -890,15 +890,15 @@ export default function Client360Workbench({
                       onSyncInventory(activeTenant.id)
                       showFeedback('Kalkulasi ulang HPP & sinkronisasi stok bahan baku berhasil!')
                     }}
-                    className="px-3 py-1.5 rounded bg-zinc-900 hover:bg-zinc-800 text-white font-medium text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer"
+                    className="px-3 py-1.5 rounded bg-zinc-900 hover:bg-zinc-800 text-white font-medium text-xs font-mono flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
                   >
                     <RotateCw size={13} />
                     <span>Sinkronkan Stok & Rekonsiliasi HPP</span>
                   </button>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full text-left text-xs min-w-[500px]">
                     <thead>
                       <tr className="border-b border-zinc-200 bg-zinc-50/80 text-[10px] font-mono text-zinc-500 uppercase">
                         <th className="py-2 px-3 font-semibold">Nama Bahan Baku</th>
@@ -1028,22 +1028,22 @@ export default function Client360Workbench({
           {/* 5. PAKET, LISENSI & TAGIHAN SAAS                          */}
           {/* ========================================================= */}
           {activeSubTab === 'billing' && (
-            <div className="space-y-4">
+            <div className="space-y-4 w-full min-w-0">
               {/* SUBSCRIPTION STATUS STRIP */}
-              <div className="bg-white rounded-lg border border-zinc-200 p-4 space-y-3">
-                <div className="flex items-center justify-between border-b border-zinc-100 pb-3">
-                  <div>
-                    <h3 className="font-semibold text-xs text-zinc-900 flex items-center gap-1.5">
-                      <CreditCard size={14} className="text-zinc-600" />
-                      <span>Status Paket & Siklus Penagihan</span>
+              <div className="bg-white rounded-lg border border-zinc-200 p-3.5 sm:p-4 space-y-3 w-full min-w-0">
+                <div className="flex items-center justify-between border-b border-zinc-100 pb-3 gap-2">
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-xs text-zinc-900 flex items-center gap-1.5 truncate">
+                      <CreditCard size={14} className="text-zinc-600 shrink-0" />
+                      <span className="truncate">Status Paket & Siklus Penagihan</span>
                     </h3>
-                    <div className="text-[11px] text-zinc-500 font-mono mt-0.5">
+                    <div className="text-[11px] text-zinc-500 font-mono mt-0.5 truncate">
                       Paket SaaS Klien Aktif
                     </div>
                   </div>
 
                   <span
-                    className={`text-[10px] font-mono font-medium px-2 py-0.5 rounded border uppercase ${
+                    className={`text-[10px] font-mono font-medium px-2 py-0.5 rounded border uppercase shrink-0 whitespace-nowrap ${
                       activeTenant.billingStatus === 'active'
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                         : activeTenant.billingStatus === 'trial'
@@ -1057,24 +1057,24 @@ export default function Client360Workbench({
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div className="p-2.5 rounded bg-zinc-50 border border-zinc-100">
-                    <span className="text-[10px] text-zinc-400 block font-mono">TARIF BULANAN</span>
-                    <span className="font-semibold text-zinc-900 font-mono">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3 text-xs">
+                  <div className="p-2.5 rounded bg-zinc-50 border border-zinc-100 min-w-0">
+                    <span className="text-[10px] text-zinc-400 block font-mono truncate">TARIF BULANAN</span>
+                    <span className="font-semibold text-zinc-900 font-mono truncate block">
                       Rp {(activeTenant.monthlyFee || 799000).toLocaleString('id-ID')}
                     </span>
-                    <span className="text-[10px] text-zinc-500 block capitalize">
+                    <span className="text-[10px] text-zinc-500 block capitalize truncate">
                       {activeTenant.billingCycle || 'monthly'}
                     </span>
                   </div>
 
-                  <div className="p-2.5 rounded bg-zinc-50 border border-zinc-100">
-                    <span className="text-[10px] text-zinc-400 block font-mono">MASA BERLAKU</span>
-                    <span className="font-semibold text-zinc-900 font-mono">
+                  <div className="p-2.5 rounded bg-zinc-50 border border-zinc-100 min-w-0">
+                    <span className="text-[10px] text-zinc-400 block font-mono truncate">MASA BERLAKU</span>
+                    <span className="font-semibold text-zinc-900 font-mono truncate block">
                       {new Date(activeTenant.subscriptionValidUntil).toLocaleDateString('id-ID')}
                     </span>
                     <span
-                      className={`text-[10px] font-mono block ${
+                      className={`text-[10px] font-mono block truncate ${
                         daysRemaining <= 0
                           ? 'text-rose-600 font-semibold'
                           : daysRemaining <= 14
@@ -1086,20 +1086,20 @@ export default function Client360Workbench({
                     </span>
                   </div>
 
-                  <div className="p-2.5 rounded bg-zinc-50 border border-zinc-100">
-                    <span className="text-[10px] text-zinc-400 block font-mono">TOTAL LTV PEMBAYARAN</span>
-                    <span className="font-semibold text-emerald-700 font-mono">
+                  <div className="p-2.5 rounded bg-zinc-50 border border-zinc-100 min-w-0">
+                    <span className="text-[10px] text-zinc-400 block font-mono truncate">TOTAL LTV PEMBAYARAN</span>
+                    <span className="font-semibold text-emerald-700 font-mono truncate block">
                       Rp {(activeTenant.lifetimePaid || 0).toLocaleString('id-ID')}
                     </span>
-                    <span className="text-[10px] text-zinc-500 block">Akumulasi Kas</span>
+                    <span className="text-[10px] text-zinc-500 block truncate">Akumulasi Kas</span>
                   </div>
 
-                  <div className="p-2.5 rounded bg-zinc-50 border border-zinc-100">
-                    <span className="text-[10px] text-zinc-400 block font-mono">AUTO RENEWAL</span>
-                    <span className="font-semibold text-zinc-800 font-mono">
+                  <div className="p-2.5 rounded bg-zinc-50 border border-zinc-100 min-w-0">
+                    <span className="text-[10px] text-zinc-400 block font-mono truncate">AUTO RENEWAL</span>
+                    <span className="font-semibold text-zinc-800 font-mono truncate block">
                       {activeTenant.autoRenew ? 'AKTIF' : 'MANUAL'}
                     </span>
-                    <span className="text-[10px] text-zinc-500 block">Siklus Faktur</span>
+                    <span className="text-[10px] text-zinc-500 block truncate">Siklus Faktur</span>
                   </div>
                 </div>
 
@@ -1126,16 +1126,16 @@ export default function Client360Workbench({
               </div>
 
               {/* INVOICES LIST FOR THIS CLIENT */}
-              <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+              <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden w-full min-w-0">
                 <div className="px-4 py-2.5 border-b border-zinc-200 bg-zinc-50/50 flex items-center justify-between">
-                  <span className="font-semibold text-xs text-zinc-900">
+                  <span className="font-semibold text-xs text-zinc-900 truncate">
                     Riwayat Faktur Toko Ini ({tenantInvoices.length})
                   </span>
-                  <span className="text-[10px] font-mono text-zinc-400">FAKTUR KLIEN</span>
+                  <span className="text-[10px] font-mono text-zinc-400 shrink-0">FAKTUR KLIEN</span>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full text-left text-xs min-w-[500px]">
                     <thead>
                       <tr className="border-b border-zinc-200 bg-zinc-50/80 text-[10px] font-mono text-zinc-500 uppercase">
                         <th className="py-2 px-3 font-semibold">No. Faktur</th>
@@ -1202,7 +1202,7 @@ export default function Client360Workbench({
           {/* 6. REMOTE CONTROL & DATABASE SNAPSHOT                     */}
           {/* ========================================================= */}
           {activeSubTab === 'remediation' && (
-            <div className="space-y-4">
+            <div className="space-y-4 w-full min-w-0">
               <div className="bg-zinc-900 text-zinc-100 rounded-lg p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -1344,8 +1344,8 @@ export default function Client360Workbench({
           {/* 7. CONSOLE LOGS & STACK TRACES                            */}
           {/* ========================================================= */}
           {activeSubTab === 'logs' && (
-            <div className="space-y-3">
-              <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+            <div className="space-y-3 w-full min-w-0">
+              <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden w-full min-w-0">
                 <div className="px-4 py-2.5 border-b border-zinc-200 bg-zinc-50/50 flex items-center justify-between">
                   <span className="font-semibold text-xs text-zinc-900">
                     Log Error Khusus Toko {activeTenant.name} ({tenantLogs.length})

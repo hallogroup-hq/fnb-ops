@@ -145,7 +145,7 @@ export default function IncidentRadarTab({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full min-w-0">
       {/* FEEDBACK BANNER */}
       {feedbackNotice && (
         <div className="py-2.5 px-4 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-900 text-xs font-mono flex items-center gap-2">
@@ -324,8 +324,8 @@ export default function IncidentRadarTab({
           </div>
 
           {/* ROLLOUT VERSIONS TABLE */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs font-mono">
+          <div className="overflow-x-auto w-full">
+            <table className="w-full text-left text-xs font-mono min-w-[650px]">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-50 text-[10px] text-zinc-500 uppercase">
                   <th className="py-2 px-3 font-semibold">Versi Rilis</th>
@@ -373,8 +373,8 @@ export default function IncidentRadarTab({
           <span className="text-[10px] font-mono text-zinc-400">DATA INTEGRITY VAULT</span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-mono">
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left text-xs font-mono min-w-[700px]">
             <thead>
               <tr className="border-b border-zinc-200 bg-zinc-50 text-[10px] text-zinc-500 uppercase">
                 <th className="py-2 px-3.5 font-semibold">Toko Klien</th>

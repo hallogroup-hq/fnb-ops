@@ -140,7 +140,7 @@ export default function BillingTab({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full min-w-0">
       {/* 1. EXECUTIVE SAAS FINANCE RIBBON */}
       <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden grid grid-cols-2 lg:grid-cols-5 divide-y lg:divide-y-0 lg:divide-x divide-zinc-200">
         {/* MRR */}
@@ -250,8 +250,8 @@ export default function BillingTab({
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left border-collapse min-w-[750px]">
             <thead>
               <tr className="bg-zinc-50 border-b border-zinc-200 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">
                 <th className="py-2 px-3">Toko / Tenant</th>
@@ -433,8 +433,8 @@ export default function BillingTab({
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left border-collapse min-w-[700px]">
             <thead>
               <tr className="bg-zinc-50 border-b border-zinc-200 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">
                 <th className="py-2 px-3">No. Faktur & Tanggal</th>

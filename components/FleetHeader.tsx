@@ -125,10 +125,10 @@ export default function FleetHeader({
         <button
           type="button"
           onClick={onOpenProvisionModal}
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium transition-all active:scale-[0.98] cursor-pointer"
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium transition-all active:scale-[0.98] cursor-pointer shrink-0"
         >
           <Plus size={13} />
-          <span>+ Toko Baru</span>
+          <span>Toko Baru</span>
         </button>
 
         <div className="h-4 w-px bg-zinc-200 hidden sm:block" />

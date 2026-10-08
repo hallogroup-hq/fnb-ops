@@ -325,7 +325,7 @@ export default function FleetOpsApp() {
 
   return (
     <AuthGate>
-      <div className="min-h-screen bg-[#FAFAFA] flex flex-col text-zinc-900">
+      <div className="min-h-screen bg-[#FAFAFA] flex flex-col text-zinc-900 w-full overflow-x-hidden">
         {/* HEADER */}
         <FleetHeader
           stats={stats}
@@ -355,7 +355,7 @@ export default function FleetOpsApp() {
         )}
 
         {/* WORKSPACE LAYOUT */}
-        <div className="flex-1 flex items-start">
+        <div className="flex-1 flex items-start w-full min-w-0">
           {/* SIDEBAR */}
           <FleetSidebar
             activeTab={activeTab}
@@ -373,7 +373,7 @@ export default function FleetOpsApp() {
           />
 
           {/* MAIN CONTENT AREA */}
-          <main className="flex-1 p-3 md:p-5 max-w-7xl mx-auto w-full space-y-4">
+          <main className="flex-1 min-w-0 p-3 sm:p-4 lg:p-5 w-full space-y-4">
             {/* PILAR 1: CLIENT 360° WORKBENCH */}
             {activeTab === 'fleet' && (
               <Client360Workbench
