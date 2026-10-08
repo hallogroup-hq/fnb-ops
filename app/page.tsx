@@ -4,14 +4,11 @@ import React, { useState, useEffect, useMemo } from 'react'
 import AuthGate from '../components/AuthGate'
 import FleetHeader from '../components/FleetHeader'
 import FleetSidebar, { ActiveOpsTab } from '../components/FleetSidebar'
-import FleetOverviewTab from '../components/FleetOverviewTab'
-import TenantDirectoryTab from '../components/TenantDirectoryTab'
-import TenantDeepInspectorModal from '../components/TenantDeepInspectorModal'
+import Client360Workbench from '../components/Client360Workbench'
+import BillingTab from '../components/BillingTab'
+import IncidentRadarTab from '../components/IncidentRadarTab'
 import ProvisioningTab from '../components/ProvisioningTab'
 import AuditLogTab from '../components/AuditLogTab'
-import BillingTab from '../components/BillingTab'
-import DatabaseBackupsTab from '../components/DatabaseBackupsTab'
-import RolloutTab from '../components/RolloutTab'
 
 import {
   getFleetTenants,
@@ -34,6 +31,12 @@ import {
   triggerTenantBackup,
   getAppRolloutStatuses,
   triggerAppRollout,
+  resetStaffPin,
+  toggleStaffStatus,
+  voidStoreOrder,
+  syncStoreInventory,
+  testPrintPrinter,
+  restartPrinterConnection,
 } from '../lib/fleet/telemetryStore'
 
 import {
@@ -58,23 +61,32 @@ import type {
   PaymentMethod,
 } from '../types/fleet'
 
-import { Terminal, Wrench, Zap, CheckCircle2 } from 'lucide-react'
+import { CheckCircle2 } from 'lucide-react'
 
 export default function FleetOpsApp() {
-  const [activeTab, setActiveTab] = useState<ActiveOpsTab>('overview')
+  const [activeTab, setActiveTab] = useState<ActiveOpsTab>('fleet')
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false)
+  const [selectedTenantId, setSelectedTenantId] = useState<string>(
+    INITIAL_TENANTS[0]?.id || ''
+  )
+  const [searchQuery, setSearchQuery] = useState<string>('')
 
   // STORE STATE (Initialized with initial data for immediate SSR hydration)
   const [tenants, setTenants] = useState<TenantStore[]>(INITIAL_TENANTS)
   const [logs, setLogs] = useState<RemoteLogEntry[]>(INITIAL_REMOTE_LOGS)
   const [commands, setCommands] = useState<RemoteRepairCommand[]>([])
-  const [requests, setRequests] = useState<ProvisioningRequest[]>(INITIAL_PROVISIONING_REQUESTS)
-  const [auditLogs, setAuditLogs] = useState<StaffAuditLog[]>(INITIAL_STAFF_AUDIT_LOGS)
+  const [requests, setRequests] = useState<ProvisioningRequest[]>(
+    INITIAL_PROVISIONING_REQUESTS
+  )
+  const [auditLogs, setAuditLogs] = useState<StaffAuditLog[]>(
+    INITIAL_STAFF_AUDIT_LOGS
+  )
   const [invoices, setInvoices] = useState<TenantInvoice[]>(INITIAL_INVOICES)
   const [backups, setBackups] = useState<DatabaseBackupJob[]>(INITIAL_BACKUPS)
-  const [rollouts, setRollouts] = useState<ClientAppRolloutStatus[]>(INITIAL_ROLLOUTS)
+  const [rollouts, setRollouts] = useState<ClientAppRolloutStatus[]>(
+    INITIAL_ROLLOUTS
+  )
 
-  const [selectedTenantForModal, setSelectedTenantForModal] = useState<TenantStore | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [actionNotice, setActionNotice] = useState<string | null>(null)
 
@@ -116,9 +128,6 @@ export default function FleetOpsApp() {
   function handleUpdateTenant(updated: TenantStore) {
     updateTenant(updated)
     setTenants(getFleetTenants())
-    if (selectedTenantForModal?.id === updated.id) {
-      setSelectedTenantForModal(updated)
-    }
   }
 
   function handleQueueCommand(
@@ -169,7 +178,9 @@ export default function FleetOpsApp() {
       monthlyFee: newTenant.monthlyFee || 799000,
       lifetimePaid: newTenant.lifetimePaid || 0,
       autoRenew: newTenant.autoRenew ?? true,
-      subscriptionValidUntil: newTenant.subscriptionValidUntil || Date.now() + 1000 * 60 * 60 * 24 * 365,
+      subscriptionValidUntil:
+        newTenant.subscriptionValidUntil ||
+        Date.now() + 1000 * 60 * 60 * 24 * 365,
       maxOutlets: newTenant.maxOutlets || 2,
       maxTerminals: newTenant.maxTerminals || 4,
       healthStatus: 'healthy',
@@ -206,19 +217,16 @@ export default function FleetOpsApp() {
     }
     updateTenant(full)
     loadAllData()
+    setSelectedTenantId(full.id)
+    setActiveTab('fleet')
   }
 
   function handleLaunchShadowMode(tenant: TenantStore) {
-    const shadowUrl = `${tenant.liveStoreUrl}${tenant.liveStoreUrl.includes('?') ? '&' : '?'}shadow_mode=true&tenant_id=${tenant.id}&staff=ops_hallo`
+    const shadowUrl = `${tenant.liveStoreUrl}${
+      tenant.liveStoreUrl.includes('?') ? '&' : '?'
+    }shadow_mode=true&tenant_id=${tenant.id}&staff=ops_hallo`
     if (typeof window !== 'undefined') {
       window.open(shadowUrl, '_blank')
-    }
-  }
-
-  function handleOpenRemediation(tenantId: string) {
-    const target = tenants.find((t) => t.id === tenantId)
-    if (target) {
-      setSelectedTenantForModal(target)
     }
   }
 
@@ -226,10 +234,6 @@ export default function FleetOpsApp() {
     extendTenantSubscription(tenantId, days)
     const tList = getFleetTenants()
     setTenants(tList)
-    if (selectedTenantForModal?.id === tenantId) {
-      const updated = tList.find((x) => x.id === tenantId)
-      if (updated) setSelectedTenantForModal(updated)
-    }
     setActionNotice(`Masa aktif langganan toko diperpanjang +${days} hari.`)
     setTimeout(() => setActionNotice(null), 4000)
   }
@@ -255,13 +259,68 @@ export default function FleetOpsApp() {
     triggerTenantBackup(tenantId)
     setBackups(getDatabaseBackupJobs())
     setAuditLogs(getStaffAuditLogs())
+    setActionNotice('Snapshot database toko berhasil dibuat.')
+    setTimeout(() => setActionNotice(null), 4000)
   }
 
-  function handleBroadcastRollout(version: string, channel: 'production' | 'canary') {
+  function handleBroadcastRollout(
+    version: string,
+    channel: 'production' | 'canary'
+  ) {
     triggerAppRollout(version, channel)
     setRollouts(getAppRolloutStatuses())
     setAuditLogs(getStaffAuditLogs())
     setCommands(getRemoteCommands())
+  }
+
+  function handleResetStaffPin(
+    tenantId: string,
+    staffId: string,
+    newPin: string = '1234'
+  ) {
+    resetStaffPin(tenantId, staffId, newPin)
+    setTenants(getFleetTenants())
+    setAuditLogs(getStaffAuditLogs())
+    setActionNotice(`PIN staf kasir berhasil di-reset ke ${newPin}.`)
+    setTimeout(() => setActionNotice(null), 4000)
+  }
+
+  function handleToggleStaffStatus(tenantId: string, staffId: string) {
+    toggleStaffStatus(tenantId, staffId)
+    setTenants(getFleetTenants())
+    setAuditLogs(getStaffAuditLogs())
+  }
+
+  function handleVoidOrder(tenantId: string, orderId: string, reason: string) {
+    voidStoreOrder(tenantId, orderId, reason)
+    setTenants(getFleetTenants())
+    setAuditLogs(getStaffAuditLogs())
+    setActionNotice('Pesanan macet berhasil di-void.')
+    setTimeout(() => setActionNotice(null), 4000)
+  }
+
+  function handleSyncInventory(tenantId: string) {
+    syncStoreInventory(tenantId)
+    setTenants(getFleetTenants())
+    setAuditLogs(getStaffAuditLogs())
+    setActionNotice('Stok bahan baku dan kalkulasi HPP berhasil disinkronkan!')
+    setTimeout(() => setActionNotice(null), 4000)
+  }
+
+  function handleTestPrint(tenantId: string, printerId: string) {
+    testPrintPrinter(tenantId, printerId)
+    setTenants(getFleetTenants())
+    setAuditLogs(getStaffAuditLogs())
+    setActionNotice('Perintah test print berhasil dikirim ke printer kasir.')
+    setTimeout(() => setActionNotice(null), 4000)
+  }
+
+  function handleRestartPrinter(tenantId: string, printerId: string) {
+    restartPrinterConnection(tenantId, printerId)
+    setTenants(getFleetTenants())
+    setAuditLogs(getStaffAuditLogs())
+    setActionNotice('Driver koneksi printer kasir berhasil di-restart.')
+    setTimeout(() => setActionNotice(null), 4000)
   }
 
   return (
@@ -270,6 +329,18 @@ export default function FleetOpsApp() {
         {/* HEADER */}
         <FleetHeader
           stats={stats}
+          pendingInvoicesCount={
+            invoices.filter((i) => i.status === 'pending' || i.status === 'overdue')
+              .length
+          }
+          searchQuery={searchQuery}
+          onSearchChange={(q) => {
+            setSearchQuery(q)
+            // If user searches, switch to fleet view if not already there
+            if (q.trim() && activeTab !== 'fleet') {
+              setActiveTab('fleet')
+            }
+          }}
           onOpenProvisionModal={() => setActiveTab('provisioning')}
           onRefreshData={loadAllData}
           isRefreshing={isRefreshing}
@@ -277,7 +348,7 @@ export default function FleetOpsApp() {
 
         {/* NOTICE TOAST */}
         {actionNotice && (
-          <div className="fixed bottom-5 right-5 z-50 py-2 px-3 rounded-md bg-zinc-900 text-white font-medium text-xs shadow-lg flex items-center gap-2">
+          <div className="fixed bottom-5 right-5 z-50 py-2 px-3 rounded-md bg-zinc-900 text-white font-medium text-xs shadow-lg flex items-center gap-2 font-mono">
             <CheckCircle2 size={14} className="text-emerald-400" />
             <span>{actionNotice}</span>
           </div>
@@ -290,33 +361,44 @@ export default function FleetOpsApp() {
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             openIncidentsCount={stats.openIncidentsCount}
-            pendingRequestsCount={requests.filter((r) => r.status === 'pending_review').length}
-            pendingInvoicesCount={invoices.filter((i) => i.status === 'pending' || i.status === 'overdue').length}
+            pendingRequestsCount={
+              requests.filter((r) => r.status === 'pending_review').length
+            }
+            pendingInvoicesCount={
+              invoices.filter((i) => i.status === 'pending' || i.status === 'overdue')
+                .length
+            }
             isCollapsed={isCollapsed}
             setIsCollapsed={setIsCollapsed}
           />
 
           {/* MAIN CONTENT AREA */}
-          <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full space-y-4">
-            {activeTab === 'overview' && (
-              <FleetOverviewTab
-                stats={stats}
+          <main className="flex-1 p-3 md:p-5 max-w-7xl mx-auto w-full space-y-4">
+            {/* PILAR 1: CLIENT 360° WORKBENCH */}
+            {activeTab === 'fleet' && (
+              <Client360Workbench
                 tenants={tenants}
-                recentLogs={logs}
-                onInspectTenant={(t) => setSelectedTenantForModal(t)}
-                onOpenRemediation={handleOpenRemediation}
-              />
-            )}
-
-            {activeTab === 'tenants' && (
-              <TenantDirectoryTab
-                tenants={tenants}
-                onInspectTenant={(t) => setSelectedTenantForModal(t)}
-                onOpenRemediation={handleOpenRemediation}
+                logs={logs}
+                invoices={invoices}
+                selectedTenantId={selectedTenantId}
+                onSelectTenant={(id) => setSelectedTenantId(id)}
+                onUpdateTenant={handleUpdateTenant}
+                onQueueCommand={handleQueueCommand}
+                onResolveLog={handleResolveLog}
                 onLaunchShadowMode={handleLaunchShadowMode}
+                onResetStaffPin={handleResetStaffPin}
+                onToggleStaffStatus={handleToggleStaffStatus}
+                onVoidOrder={handleVoidOrder}
+                onSyncInventory={handleSyncInventory}
+                onTestPrint={handleTestPrint}
+                onRestartPrinter={handleRestartPrinter}
+                onExtendSubscription={handleExtendSubscription}
+                onMarkInvoicePaid={handleMarkInvoicePaid}
+                onTriggerBackup={handleTriggerBackup}
               />
             )}
 
+            {/* PILAR 2: SAAS FINANCE & BILLING HUB */}
             {activeTab === 'billing' && (
               <BillingTab
                 tenants={tenants}
@@ -328,228 +410,21 @@ export default function FleetOpsApp() {
               />
             )}
 
-            {activeTab === 'logs' && (
-              <div className="space-y-3">
-                <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-zinc-200 flex items-center justify-between bg-zinc-50/50">
-                    <div>
-                      <h2 className="font-semibold text-xs text-zinc-900 flex items-center gap-1.5">
-                        <Terminal size={14} />
-                        <span>Pusat Log Error Realtime Seluruh Armada Klien</span>
-                      </h2>
-                      <p className="text-[11px] text-zinc-500 mt-0.5">
-                        Menangkap unhandled exception, error hardware printer, dan storage queue dari seluruh toko
-                      </p>
-                    </div>
-                    <span className="text-[10px] font-mono text-zinc-400">
-                      {logs.length} ENTRI MASUK
-                    </span>
-                  </div>
-
-                  <div className="divide-y divide-zinc-100 p-3 space-y-2">
-                    {logs.map((l) => (
-                      <div
-                        key={l.id}
-                        className={`p-3 rounded border text-xs space-y-1.5 ${
-                          l.resolved
-                            ? 'bg-zinc-50 border-zinc-200 opacity-60'
-                            : l.level === 'fatal'
-                            ? 'bg-rose-50/40 border-rose-200 text-rose-950'
-                            : l.level === 'error'
-                            ? 'bg-amber-50/40 border-amber-200 text-amber-950'
-                            : 'bg-white border-zinc-200 text-zinc-800'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span
-                              className={`text-[9px] font-mono font-medium px-1 rounded uppercase ${
-                                l.level === 'fatal'
-                                  ? 'bg-rose-100 text-rose-800'
-                                  : l.level === 'error'
-                                  ? 'bg-amber-100 text-amber-800'
-                                  : 'bg-zinc-200 text-zinc-700'
-                              }`}
-                            >
-                              {l.level}
-                            </span>
-                            <span className="font-semibold text-xs">{l.sourceModule}</span>
-                            <span className="text-[11px] font-mono text-zinc-500">
-                              · Tenant: {l.tenantId} {l.outletName ? `(${l.outletName})` : ''}
-                            </span>
-                          </div>
-
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-[10px] text-zinc-400 font-mono">
-                              {new Date(l.timestamp).toLocaleString('id-ID')}
-                            </span>
-                            {!l.resolved && (
-                              <button
-                                type="button"
-                                onClick={() => handleResolveLog(l.id)}
-                                className="px-2 py-0.5 rounded bg-white border border-zinc-200 hover:border-zinc-400 font-medium text-[10px] transition-colors cursor-pointer text-zinc-800"
-                              >
-                                Selesaikan
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        <p className="font-mono text-xs leading-relaxed">
-                          {l.message}
-                        </p>
-
-                        {l.stackTrace && (
-                          <details className="text-[11px] font-mono bg-zinc-900 text-zinc-100 p-2.5 rounded overflow-x-auto cursor-pointer">
-                            <summary className="text-zinc-400 hover:text-white font-medium">
-                              Lihat Stack Trace
-                            </summary>
-                            <pre className="mt-1 text-[10px] leading-relaxed text-zinc-300 whitespace-pre-wrap">
-                              {l.stackTrace}
-                            </pre>
-                          </details>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
+            {/* PILAR 3: INCIDENT RADAR & DEPLOYMENTS */}
+            {activeTab === 'radar' && (
+              <IncidentRadarTab
+                tenants={tenants}
+                logs={logs}
+                backups={backups}
+                rollouts={rollouts}
+                onBroadcastRollout={handleBroadcastRollout}
+                onTriggerBackup={handleTriggerBackup}
+                onResolveLog={handleResolveLog}
+                onQueueCommand={handleQueueCommand}
+              />
             )}
 
-            {activeTab === 'remediation' && (
-              <div className="space-y-4">
-                <div className="bg-zinc-900 text-zinc-100 rounded-lg p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Wrench size={16} className="text-emerald-400" />
-                      <div>
-                        <h2 className="font-semibold text-xs text-white">
-                          Pusat Remediasi Jarak Jauh (Remote Fleet Actions)
-                        </h2>
-                        <p className="text-[11px] text-zinc-400 mt-0.5">
-                          Kirim instruksi perbaikan darurat ke seluruh toko atau toko terpilih tanpa perlu datang ke lokasi fisik
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-mono text-zinc-400">
-                      FLEET-WIDE BROADCAST
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-1">
-                    <div className="p-3 rounded bg-zinc-800 border border-zinc-700 space-y-2">
-                      <div className="font-semibold text-xs text-white">
-                        Mass Cache Purge
-                      </div>
-                      <p className="text-[10px] text-zinc-400 leading-normal">
-                        Kirim perintah purge cache browser ke seluruh tablet kasir yang aktif.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          tenants.forEach((t) =>
-                            handleQueueCommand(t.id, 'FORCE_CACHE_PURGE')
-                          )
-                          setActionNotice('Perintah mass cache purge disiarkan ke seluruh armada toko.')
-                          setTimeout(() => setActionNotice(null), 4000)
-                        }}
-                        className="w-full py-1.5 px-2.5 rounded bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-xs transition-colors cursor-pointer"
-                      >
-                        Broadcast Purge All
-                      </button>
-                    </div>
-
-                    <div className="p-3 rounded bg-zinc-800 border border-zinc-700 space-y-2">
-                      <div className="font-semibold text-xs text-white">
-                        Release Stuck Bills
-                      </div>
-                      <p className="text-[10px] text-zinc-400 leading-normal">
-                        Lepaskan meja dan antrean checkout yang terkunci pada toko berstatus kritis.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const crit = tenants.filter((t) => t.healthStatus === 'critical')
-                          crit.forEach((t) =>
-                            handleQueueCommand(t.id, 'CLEAR_STUCK_BILLS')
-                          )
-                          setActionNotice(`Perintah pelepasan tagihan dikirim ke ${crit.length} toko kritis.`)
-                          setTimeout(() => setActionNotice(null), 4000)
-                        }}
-                        className="w-full py-1.5 px-2.5 rounded bg-amber-400 hover:bg-amber-300 text-zinc-950 font-semibold text-xs transition-colors cursor-pointer"
-                      >
-                        Fix All Critical Stores
-                      </button>
-                    </div>
-
-                    <div className="p-3 rounded bg-zinc-800 border border-zinc-700 space-y-2">
-                      <div className="font-semibold text-xs text-white">
-                        Emergency Maintenance
-                      </div>
-                      <p className="text-[10px] text-zinc-400 leading-normal">
-                        Buka diagnostik mendalam pada toko tertentu untuk mengaktifkan pemeliharaan.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab('tenants')}
-                        className="w-full py-1.5 px-2.5 rounded bg-zinc-700 hover:bg-zinc-600 text-white font-medium text-xs transition-colors cursor-pointer"
-                      >
-                        Pilih Toko di Direktori &rarr;
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* COMMAND AUDIT QUEUE */}
-                <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
-                  <div className="px-4 py-3 border-b border-zinc-200 flex items-center justify-between bg-zinc-50/50">
-                    <h3 className="font-semibold text-xs text-zinc-900">
-                      Antrean Perintah Remote Terkini
-                    </h3>
-                    <span className="text-[10px] font-mono text-zinc-400">
-                      {commands.length} PERINTAH
-                    </span>
-                  </div>
-
-                  <div className="divide-y divide-zinc-100 text-xs">
-                    {commands.length > 0 ? (
-                      commands.map((cmd) => (
-                        <div key={cmd.id} className="p-3 flex items-center justify-between gap-3">
-                          <div>
-                            <div className="font-medium text-zinc-900 flex items-center gap-1.5">
-                              <span className="font-mono text-xs">{cmd.commandType}</span>
-                              <span className="text-zinc-400 font-normal">
-                                &rarr; Toko {cmd.tenantId}
-                              </span>
-                            </div>
-                            <div className="text-[10px] text-zinc-500 font-mono mt-0.5">
-                              ID: {cmd.id} · Diterbitkan: {new Date(cmd.issuedAt).toLocaleTimeString('id-ID')}
-                            </div>
-                          </div>
-
-                          <div>
-                            {cmd.status === 'pending' ? (
-                              <span className="text-[10px] font-mono font-medium px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 border border-amber-200">
-                                PENDING INSTANCE
-                              </span>
-                            ) : (
-                              <span className="text-[10px] font-mono font-medium px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
-                                EXECUTED SUCCESS
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-8 text-center text-zinc-400">
-                        Belum ada riwayat perintah remote yang dikirim.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
+            {/* PILAR 4: ONBOARDING TOKO BARU */}
             {activeTab === 'provisioning' && (
               <ProvisioningTab
                 requests={requests}
@@ -559,40 +434,10 @@ export default function FleetOpsApp() {
               />
             )}
 
-            {activeTab === 'backups' && (
-              <DatabaseBackupsTab
-                tenants={tenants}
-                backups={backups}
-                onTriggerBackup={handleTriggerBackup}
-              />
-            )}
-
-            {activeTab === 'rollout' && (
-              <RolloutTab
-                rollouts={rollouts}
-                tenants={tenants}
-                onBroadcastRollout={handleBroadcastRollout}
-              />
-            )}
-
-            {activeTab === 'audit' && (
-              <AuditLogTab logs={auditLogs} />
-            )}
+            {/* PILAR 5: AUDIT TRAIL STAF */}
+            {activeTab === 'audit' && <AuditLogTab logs={auditLogs} />}
           </main>
         </div>
-
-        {/* DEEP INSPECTOR MODAL */}
-        {selectedTenantForModal && (
-          <TenantDeepInspectorModal
-            tenant={selectedTenantForModal}
-            logs={logs}
-            onClose={() => setSelectedTenantForModal(null)}
-            onUpdateTenant={handleUpdateTenant}
-            onQueueCommand={handleQueueCommand}
-            onResolveLog={handleResolveLog}
-            onLaunchShadowMode={handleLaunchShadowMode}
-          />
-        )}
       </div>
     </AuthGate>
   )

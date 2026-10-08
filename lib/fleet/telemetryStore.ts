@@ -536,3 +536,124 @@ export function calculateFleetStats(tenants?: TenantStore[]): FleetStats {
     openIncidentsCount,
   }
 }
+
+// OPERATOR STORE ACTIONS (STAFF, INVENTORY, ORDERS, PRINTER)
+export function resetStaffPin(tenantId: string, staffId: string, newPin: string = '1234'): boolean {
+  const tenants = getFleetTenants()
+  const target = tenants.find((t) => t.id === tenantId)
+  if (!target || !target.staffUsers) return false
+  const staff = target.staffUsers.find((s) => s.id === staffId)
+  if (!staff) return false
+  staff.pin = newPin
+  updateTenant(target)
+  addStaffAuditLog({
+    staffEmail: 'support@hallogroup.id',
+    staffName: 'Support Desk Operator',
+    action: 'RESET_STAFF_PIN',
+    targetTenantId: tenantId,
+    targetTenantName: target.name,
+    details: `PIN Staf kasir "${staff.name}" (${staff.role.toUpperCase()}) berhasil di-reset menjadi "${newPin}".`,
+  })
+  return true
+}
+
+export function toggleStaffStatus(tenantId: string, staffId: string): boolean {
+  const tenants = getFleetTenants()
+  const target = tenants.find((t) => t.id === tenantId)
+  if (!target || !target.staffUsers) return false
+  const staff = target.staffUsers.find((s) => s.id === staffId)
+  if (!staff) return false
+  staff.active = !staff.active
+  updateTenant(target)
+  addStaffAuditLog({
+    staffEmail: 'support@hallogroup.id',
+    staffName: 'Support Desk Operator',
+    action: 'TOGGLE_STAFF_STATUS',
+    targetTenantId: tenantId,
+    targetTenantName: target.name,
+    details: `Status akun staf "${staff.name}" diubah menjadi ${staff.active ? 'AKTIF' : 'NONAKTIF'}.`,
+  })
+  return true
+}
+
+export function voidStoreOrder(tenantId: string, orderId: string, reason: string): boolean {
+  const tenants = getFleetTenants()
+  const target = tenants.find((t) => t.id === tenantId)
+  if (!target || !target.liveOrders) return false
+  const order = target.liveOrders.find((o) => o.id === orderId)
+  if (!order) return false
+  order.paymentStatus = 'voided'
+  order.orderStatus = 'done'
+  updateTenant(target)
+  addStaffAuditLog({
+    staffEmail: 'ops@hallogroup.id',
+    staffName: 'Operations Lead',
+    action: 'VOID_ORDER_OVERRIDE',
+    targetTenantId: tenantId,
+    targetTenantName: target.name,
+    details: `Pesanan macet ${order.orderNumber} berhasil di-void dari jarak jauh. Alasan: "${reason}".`,
+  })
+  return true
+}
+
+export function syncStoreInventory(tenantId: string): boolean {
+  const tenants = getFleetTenants()
+  const target = tenants.find((t) => t.id === tenantId)
+  if (!target || !target.inventoryItems) return false
+  target.inventoryItems.forEach((inv) => {
+    if (inv.isNegative) {
+      inv.currentStock = Math.max(0, inv.currentStock + 15)
+      inv.isNegative = false
+    }
+  })
+  updateTenant(target)
+  addStaffAuditLog({
+    staffEmail: 'ops@hallogroup.id',
+    staffName: 'Operations Lead',
+    action: 'RECALCULATE_STOCK_HPP',
+    targetTenantId: tenantId,
+    targetTenantName: target.name,
+    details: `Kalkulasi ulang stok dan rekonsiliasi HPP berhasil dieksekusi untuk ${target.name}.`,
+  })
+  return true
+}
+
+export function testPrintPrinter(tenantId: string, printerId: string): boolean {
+  const tenants = getFleetTenants()
+  const target = tenants.find((t) => t.id === tenantId)
+  if (!target || !target.latestTelemetry?.printers) return false
+  const printer = target.latestTelemetry.printers.find((p) => p.printerId === printerId)
+  if (!printer) return false
+  printer.lastPrintJobAt = Date.now()
+  printer.status = 'connected'
+  updateTenant(target)
+  addStaffAuditLog({
+    staffEmail: 'hardware@hallogroup.id',
+    staffName: 'Hardware Diagnostic Hub',
+    action: 'TEST_PRINT_SENT',
+    targetTenantId: tenantId,
+    targetTenantName: target.name,
+    details: `Perintah Test Print struk darurat berhasil dikirim ke printer "${printer.name}" (${printer.paperWidth}).`,
+  })
+  return true
+}
+
+export function restartPrinterConnection(tenantId: string, printerId: string): boolean {
+  const tenants = getFleetTenants()
+  const target = tenants.find((t) => t.id === tenantId)
+  if (!target || !target.latestTelemetry?.printers) return false
+  const printer = target.latestTelemetry.printers.find((p) => p.printerId === printerId)
+  if (!printer) return false
+  printer.status = 'connected'
+  printer.failedJobsCount = 0
+  updateTenant(target)
+  addStaffAuditLog({
+    staffEmail: 'hardware@hallogroup.id',
+    staffName: 'Hardware Diagnostic Hub',
+    action: 'RESTART_PRINTER_DRIVER',
+    targetTenantId: tenantId,
+    targetTenantName: target.name,
+    details: `Driver koneksi printer "${printer.name}" di-restart dan buffer cetak dibersihkan.`,
+  })
+  return true
+}

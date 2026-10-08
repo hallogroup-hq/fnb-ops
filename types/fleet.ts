@@ -158,11 +158,58 @@ export interface ClientAppRolloutStatus {
   notes: string
 }
 
+export interface StoreStaffUser {
+  id: string
+  tenantId: string
+  outletId?: string
+  name: string
+  role: 'owner' | 'manager' | 'cashier' | 'barista' | 'kitchen'
+  pin: string
+  active: boolean
+  lastLoginAt?: number
+}
+
+export interface StoreMenuItemPreview {
+  id: string
+  name: string
+  category: string
+  price: number
+  isAvailable: boolean
+  hpp: number
+}
+
+export interface StoreInventoryPreview {
+  id: string
+  name: string
+  unit: string
+  currentStock: number
+  minimumStock: number
+  isNegative: boolean
+  lastRestockedAt?: number
+}
+
+export interface StoreLiveOrderPreview {
+  id: string
+  orderNumber: string
+  tableName?: string
+  customerName?: string
+  totalAmount: number
+  paymentStatus: 'paid' | 'pending' | 'voided'
+  orderStatus: 'queue' | 'cooking' | 'served' | 'done' | 'stuck'
+  createdAt: number
+  itemsSummary: string
+}
+
 export interface TenantStore {
   id: string
   slug: string
   name: string
   legalName: string
+  categoryFnb?: string
+  address?: string
+  taxId?: string
+  bankName?: string
+  bankAccount?: string
   ownerName: string
   ownerPhone: string
   ownerEmail: string
@@ -185,6 +232,10 @@ export interface TenantStore {
   }
   modules: Record<string, boolean>
   emergencyMaintenance: boolean
+  staffUsers?: StoreStaffUser[]
+  menuItems?: StoreMenuItemPreview[]
+  inventoryItems?: StoreInventoryPreview[]
+  liveOrders?: StoreLiveOrderPreview[]
   invoices?: TenantInvoice[]
   createdAt: number
   updatedAt: number
