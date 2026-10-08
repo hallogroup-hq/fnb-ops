@@ -2,15 +2,11 @@
 
 import React, { useState, useEffect } from 'react'
 import {
-  ShieldCheck,
-  Radio,
-  Server,
   Plus,
-  LogOut,
-  Bell,
   RefreshCw,
-  ExternalLink,
-  ChevronDown,
+  LogOut,
+  Radio,
+  Search,
 } from 'lucide-react'
 import type { FleetStats } from '../types/fleet'
 
@@ -27,7 +23,7 @@ export default function FleetHeader({
   onRefreshData,
   isRefreshing = false,
 }: FleetHeaderProps) {
-  const [staffName, setStaffName] = useState<string>('Staff Operasional')
+  const [staffName, setStaffName] = useState<string>('Akmal I. (Lead Operations)')
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -38,78 +34,82 @@ export default function FleetHeader({
 
   function handleLogout() {
     if (typeof window !== 'undefined') {
-      window.sessionStorage.removeItem('fnb_ops_auth_verified')
-      window.sessionStorage.removeItem('fnb_ops_staff_name')
+      window.sessionStorage.setItem('fnb_ops_logged_out', 'true')
       window.location.reload()
     }
   }
 
   return (
-    <header className="sticky top-0 z-30 bg-white border-b border-[#E2E8F0] px-4 md:px-6 py-3 flex items-center justify-between gap-4 shadow-2xs">
-      {/* BRAND & STATUS BADGE */}
+    <header className="sticky top-0 z-30 bg-white border-b border-zinc-200 px-4 py-2.5 flex items-center justify-between gap-4">
+      {/* BRAND & STATUS INDICATOR */}
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-black text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
-          OP
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded bg-zinc-950 text-white flex items-center justify-center font-mono font-bold text-[11px] shrink-0">
+            HG
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="font-semibold text-xs tracking-tight text-zinc-900">
+              Fleet Operations
+            </span>
+            <span className="text-[10px] font-mono text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded border border-zinc-200">
+              v2.5
+            </span>
+          </div>
         </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="font-black text-sm text-slate-900 tracking-tight">
-              Nusantara Fleet Ops
-            </h1>
-            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200">
-              v2.5 PROD
-            </span>
-          </div>
-          <div className="flex items-center gap-2 text-[11px] text-slate-500 font-medium">
-            <span className="flex items-center gap-1.5 text-emerald-600 font-bold">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Gateway Realtime Terhubung
-            </span>
-            <span>·</span>
-            <span className="font-mono text-slate-600">SLA {stats.slaUptimePct}%</span>
-          </div>
+
+        <div className="h-4 w-px bg-zinc-200 hidden sm:block" />
+
+        {/* GATEWAY STATUS */}
+        <div className="hidden sm:flex items-center gap-2 text-[11px] font-mono text-zinc-600">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+          <span>Gateway Active</span>
+          <span className="text-zinc-300">/</span>
+          <span className="tabular-nums font-medium text-zinc-900">{stats.slaUptimePct}% SLA</span>
+          <span className="text-zinc-300">/</span>
+          <span className="text-zinc-500">{stats.totalOutlets} Outlets Live</span>
         </div>
       </div>
 
-      {/* QUICK ACTIONS & PROFILE */}
-      <div className="flex items-center gap-2.5">
+      {/* ACTIONS & OPERATOR BADGE */}
+      <div className="flex items-center gap-2">
         <button
           type="button"
           onClick={onRefreshData}
           disabled={isRefreshing}
-          className="p-2 rounded-xl border border-slate-200 text-slate-600 hover:text-black hover:border-black transition-colors cursor-pointer bg-white"
-          title="Segarkan Data Telemetri"
+          className="p-1.5 rounded border border-zinc-200 text-zinc-600 hover:text-zinc-900 hover:border-zinc-300 bg-white transition-colors cursor-pointer"
+          title="Segarkan telemetri"
         >
-          <RefreshCw size={15} className={isRefreshing ? 'animate-spin' : ''} />
+          <RefreshCw size={13} className={isRefreshing ? 'animate-spin text-zinc-900' : ''} />
         </button>
 
         <button
           type="button"
           onClick={onOpenProvisionModal}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-black hover:bg-slate-800 text-white text-xs font-bold transition-all active:scale-[0.98] shadow-xs cursor-pointer"
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium transition-all active:scale-[0.98] cursor-pointer"
         >
-          <Plus size={14} />
-          <span>+ Provisioning Klien</span>
+          <Plus size={13} />
+          <span>Onboard Tenant</span>
         </button>
 
-        {/* STAFF USER PILL */}
-        <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-slate-200">
-          <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-300 flex items-center justify-center text-xs font-black text-slate-800">
-            {staffName.slice(0, 2).toUpperCase()}
-          </div>
-          <div className="text-left hidden lg:block">
-            <div className="text-xs font-bold text-slate-900 truncate max-w-[120px]">
+        <div className="h-4 w-px bg-zinc-200" />
+
+        {/* OPERATOR INFO */}
+        <div className="flex items-center gap-2 pl-1">
+          <div className="text-right hidden md:block">
+            <div className="text-xs font-medium text-zinc-900 leading-tight">
               {staffName}
             </div>
-            <div className="text-[10px] text-emerald-700 font-semibold">Hallo Ops Staff</div>
+            <div className="text-[10px] font-mono text-zinc-500 leading-tight">
+              Hallo Group HQ
+            </div>
           </div>
           <button
             type="button"
             onClick={handleLogout}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-            title="Keluar dari Konsol"
+            title="Kunci sesi"
+            className="p-1.5 rounded text-zinc-400 hover:text-zinc-800 hover:bg-zinc-100 transition-colors cursor-pointer"
           >
-            <LogOut size={15} />
+            <LogOut size={13} />
           </button>
         </div>
       </div>

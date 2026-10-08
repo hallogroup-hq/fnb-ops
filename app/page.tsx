@@ -12,7 +12,6 @@ import AuditLogTab from '../components/AuditLogTab'
 
 import {
   getFleetTenants,
-  saveFleetTenants,
   updateTenant,
   getRemoteLogs,
   resolveRemoteLog,
@@ -182,7 +181,7 @@ export default function FleetOpsApp() {
 
   return (
     <AuthGate>
-      <div className="min-h-screen bg-[#F8F9FA] flex flex-col text-slate-900">
+      <div className="min-h-screen bg-[#FAFAFA] flex flex-col text-zinc-900">
         {/* HEADER */}
         <FleetHeader
           stats={stats}
@@ -193,8 +192,8 @@ export default function FleetOpsApp() {
 
         {/* NOTICE TOAST */}
         {actionNotice && (
-          <div className="fixed bottom-6 right-6 z-50 p-4 rounded-2xl bg-emerald-600 text-white font-bold text-xs shadow-2xl flex items-center gap-2 animate-in slide-in-from-bottom-3">
-            <CheckCircle2 size={16} />
+          <div className="fixed bottom-5 right-5 z-50 py-2 px-3 rounded-md bg-zinc-900 text-white font-medium text-xs shadow-lg flex items-center gap-2">
+            <CheckCircle2 size={14} className="text-emerald-400" />
             <span>{actionNotice}</span>
           </div>
         )}
@@ -212,7 +211,7 @@ export default function FleetOpsApp() {
           />
 
           {/* MAIN CONTENT AREA */}
-          <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-7xl mx-auto w-full space-y-6">
+          <main className="flex-1 p-4 md:p-6 max-w-7xl mx-auto w-full space-y-4">
             {activeTab === 'overview' && (
               <FleetOverviewTab
                 stats={stats}
@@ -233,65 +232,65 @@ export default function FleetOpsApp() {
             )}
 
             {activeTab === 'logs' && (
-              <div className="space-y-4">
-                <div className="bg-white rounded-3xl border border-slate-200 p-6 space-y-4 shadow-2xs">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="space-y-3">
+                <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-zinc-200 flex items-center justify-between bg-zinc-50/50">
                     <div>
-                      <h2 className="font-extrabold text-sm text-slate-900 flex items-center gap-2">
-                        <Terminal size={17} />
+                      <h2 className="font-semibold text-xs text-zinc-900 flex items-center gap-1.5">
+                        <Terminal size={14} />
                         <span>Pusat Log Error Realtime Seluruh Armada Klien</span>
                       </h2>
-                      <p className="text-xs text-slate-500 mt-0.5">
-                        Menangkap unhandled exception, error hardware printer, dan bottleneck storage dari seluruh toko
+                      <p className="text-[11px] text-zinc-500 mt-0.5">
+                        Menangkap unhandled exception, error hardware printer, dan storage queue dari seluruh toko
                       </p>
                     </div>
-                    <span className="text-xs font-mono font-bold text-slate-400">
-                      {logs.length} Log Masuk
+                    <span className="text-[10px] font-mono text-zinc-400">
+                      {logs.length} ENTRI MASUK
                     </span>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="divide-y divide-zinc-100 p-3 space-y-2">
                     {logs.map((l) => (
                       <div
                         key={l.id}
-                        className={`p-4 rounded-2xl border text-xs space-y-2.5 ${
+                        className={`p-3 rounded border text-xs space-y-1.5 ${
                           l.resolved
-                            ? 'bg-slate-50 border-slate-200 opacity-60'
+                            ? 'bg-zinc-50 border-zinc-200 opacity-60'
                             : l.level === 'fatal'
-                            ? 'bg-rose-50 border-rose-300 text-rose-950'
+                            ? 'bg-rose-50/40 border-rose-200 text-rose-950'
                             : l.level === 'error'
-                            ? 'bg-amber-50 border-amber-300 text-amber-950'
-                            : 'bg-white border-slate-200 text-slate-800'
+                            ? 'bg-amber-50/40 border-amber-200 text-amber-950'
+                            : 'bg-white border-zinc-200 text-zinc-800'
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-1.5 flex-wrap">
                             <span
-                              className={`text-[9px] font-mono font-extrabold px-2 py-0.5 rounded uppercase ${
+                              className={`text-[9px] font-mono font-medium px-1 rounded uppercase ${
                                 l.level === 'fatal'
-                                  ? 'bg-rose-600 text-white'
+                                  ? 'bg-rose-100 text-rose-800'
                                   : l.level === 'error'
-                                  ? 'bg-amber-600 text-white'
-                                  : 'bg-slate-200 text-slate-800'
+                                  ? 'bg-amber-100 text-amber-800'
+                                  : 'bg-zinc-200 text-zinc-700'
                               }`}
                             >
                               {l.level}
                             </span>
-                            <span className="font-bold text-xs">{l.sourceModule}</span>
-                            <span className="text-[11px] font-mono text-slate-500">
+                            <span className="font-semibold text-xs">{l.sourceModule}</span>
+                            <span className="text-[11px] font-mono text-zinc-500">
                               · Tenant: {l.tenantId} {l.outletName ? `(${l.outletName})` : ''}
                             </span>
                           </div>
 
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-[11px] text-slate-400 font-mono">
+                            <span className="text-[10px] text-zinc-400 font-mono">
                               {new Date(l.timestamp).toLocaleString('id-ID')}
                             </span>
                             {!l.resolved && (
                               <button
                                 type="button"
                                 onClick={() => handleResolveLog(l.id)}
-                                className="px-2.5 py-1 rounded-lg bg-white border border-slate-300 hover:border-black font-bold text-[11px] transition-colors cursor-pointer text-slate-800"
+                                className="px-2 py-0.5 rounded bg-white border border-zinc-200 hover:border-zinc-400 font-medium text-[10px] transition-colors cursor-pointer text-zinc-800"
                               >
                                 Selesaikan
                               </button>
@@ -299,16 +298,16 @@ export default function FleetOpsApp() {
                           </div>
                         </div>
 
-                        <p className="font-mono text-xs font-semibold leading-relaxed">
+                        <p className="font-mono text-xs leading-relaxed">
                           {l.message}
                         </p>
 
                         {l.stackTrace && (
-                          <details className="text-[11px] font-mono bg-slate-900 text-slate-100 p-3 rounded-xl overflow-x-auto cursor-pointer">
-                            <summary className="text-slate-400 font-bold hover:text-white">
-                              Lihat Stack Trace &gt;
+                          <details className="text-[11px] font-mono bg-zinc-900 text-zinc-100 p-2.5 rounded overflow-x-auto cursor-pointer">
+                            <summary className="text-zinc-400 hover:text-white font-medium">
+                              Lihat Stack Trace
                             </summary>
-                            <pre className="mt-2 text-[10px] leading-relaxed text-slate-300 whitespace-pre-wrap">
+                            <pre className="mt-1 text-[10px] leading-relaxed text-zinc-300 whitespace-pre-wrap">
                               {l.stackTrace}
                             </pre>
                           </details>
@@ -321,26 +320,31 @@ export default function FleetOpsApp() {
             )}
 
             {activeTab === 'remediation' && (
-              <div className="space-y-6">
-                <div className="bg-slate-900 text-white rounded-3xl p-6 space-y-4">
-                  <div className="flex items-center gap-2.5">
-                    <Wrench size={20} className="text-emerald-400" />
-                    <div>
-                      <h2 className="font-black text-sm text-white">
-                        Pusat Remediasi Jarak Jauh (Remote Fleet Remediation)
-                      </h2>
-                      <p className="text-xs text-slate-400 mt-0.5">
-                        Kirim perintah perbaikan darurat ke seluruh toko atau toko terpilih tanpa perlu datang ke lokasi fisik
-                      </p>
+              <div className="space-y-4">
+                <div className="bg-zinc-900 text-zinc-100 rounded-lg p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Wrench size={16} className="text-emerald-400" />
+                      <div>
+                        <h2 className="font-semibold text-xs text-white">
+                          Pusat Remediasi Jarak Jauh (Remote Fleet Actions)
+                        </h2>
+                        <p className="text-[11px] text-zinc-400 mt-0.5">
+                          Kirim instruksi perbaikan darurat ke seluruh toko atau toko terpilih tanpa perlu datang ke lokasi fisik
+                        </p>
+                      </div>
                     </div>
+                    <span className="text-[10px] font-mono text-zinc-400">
+                      FLEET-WIDE BROADCAST
+                    </span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
-                    <div className="p-4 rounded-2xl bg-slate-800 border border-slate-700 space-y-2">
-                      <div className="font-bold text-xs text-white">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-1">
+                    <div className="p-3 rounded bg-zinc-800 border border-zinc-700 space-y-2">
+                      <div className="font-semibold text-xs text-white">
                         Mass Cache Purge
                       </div>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[10px] text-zinc-400 leading-normal">
                         Kirim perintah purge cache browser ke seluruh tablet kasir yang aktif.
                       </p>
                       <button
@@ -352,17 +356,17 @@ export default function FleetOpsApp() {
                           setActionNotice('Perintah mass cache purge disiarkan ke seluruh armada toko.')
                           setTimeout(() => setActionNotice(null), 4000)
                         }}
-                        className="w-full py-2 px-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-colors cursor-pointer"
+                        className="w-full py-1.5 px-2.5 rounded bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-xs transition-colors cursor-pointer"
                       >
                         Broadcast Purge All
                       </button>
                     </div>
 
-                    <div className="p-4 rounded-2xl bg-slate-800 border border-slate-700 space-y-2">
-                      <div className="font-bold text-xs text-white">
+                    <div className="p-3 rounded bg-zinc-800 border border-zinc-700 space-y-2">
+                      <div className="font-semibold text-xs text-white">
                         Release Stuck Bills
                       </div>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[10px] text-zinc-400 leading-normal">
                         Lepaskan meja dan antrean checkout yang terkunci pada toko berstatus kritis.
                       </p>
                       <button
@@ -375,72 +379,72 @@ export default function FleetOpsApp() {
                           setActionNotice(`Perintah pelepasan tagihan dikirim ke ${crit.length} toko kritis.`)
                           setTimeout(() => setActionNotice(null), 4000)
                         }}
-                        className="w-full py-2 px-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs transition-colors cursor-pointer"
+                        className="w-full py-1.5 px-2.5 rounded bg-amber-400 hover:bg-amber-300 text-zinc-950 font-semibold text-xs transition-colors cursor-pointer"
                       >
                         Fix All Critical Stores
                       </button>
                     </div>
 
-                    <div className="p-4 rounded-2xl bg-slate-800 border border-slate-700 space-y-2">
-                      <div className="font-bold text-xs text-white">
-                        Emergency Mode
+                    <div className="p-3 rounded bg-zinc-800 border border-zinc-700 space-y-2">
+                      <div className="font-semibold text-xs text-white">
+                        Emergency Maintenance
                       </div>
-                      <p className="text-[11px] text-slate-400">
+                      <p className="text-[10px] text-zinc-400 leading-normal">
                         Buka diagnostik mendalam pada toko tertentu untuk mengaktifkan pemeliharaan.
                       </p>
                       <button
                         type="button"
                         onClick={() => setActiveTab('tenants')}
-                        className="w-full py-2 px-3 rounded-xl bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs transition-colors cursor-pointer"
+                        className="w-full py-1.5 px-2.5 rounded bg-zinc-700 hover:bg-zinc-600 text-white font-medium text-xs transition-colors cursor-pointer"
                       >
-                        Pilih Toko di Direktori &gt;
+                        Pilih Toko di Direktori &rarr;
                       </button>
                     </div>
                   </div>
                 </div>
 
                 {/* COMMAND AUDIT QUEUE */}
-                <div className="bg-white rounded-3xl border border-slate-200 p-6 space-y-4 shadow-2xs">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <h3 className="font-extrabold text-sm text-slate-900">
+                <div className="bg-white rounded-lg border border-zinc-200 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-zinc-200 flex items-center justify-between bg-zinc-50/50">
+                    <h3 className="font-semibold text-xs text-zinc-900">
                       Antrean Perintah Remote Terkini
                     </h3>
-                    <span className="text-xs font-mono font-bold text-slate-400">
-                      {commands.length} Perintah
+                    <span className="text-[10px] font-mono text-zinc-400">
+                      {commands.length} PERINTAH
                     </span>
                   </div>
 
-                  <div className="divide-y divide-slate-100 text-xs">
+                  <div className="divide-y divide-zinc-100 text-xs">
                     {commands.length > 0 ? (
                       commands.map((cmd) => (
-                        <div key={cmd.id} className="py-3 flex items-center justify-between gap-3">
+                        <div key={cmd.id} className="p-3 flex items-center justify-between gap-3">
                           <div>
-                            <div className="font-bold text-slate-900 flex items-center gap-2">
+                            <div className="font-medium text-zinc-900 flex items-center gap-1.5">
                               <span className="font-mono text-xs">{cmd.commandType}</span>
-                              <span className="text-slate-400 font-normal">
-                                -&gt; Toko {cmd.tenantId}
+                              <span className="text-zinc-400 font-normal">
+                                &rarr; Toko {cmd.tenantId}
                               </span>
                             </div>
-                            <div className="text-[11px] text-slate-500 font-mono mt-0.5">
+                            <div className="text-[10px] text-zinc-500 font-mono mt-0.5">
                               ID: {cmd.id} · Diterbitkan: {new Date(cmd.issuedAt).toLocaleTimeString('id-ID')}
                             </div>
                           </div>
 
                           <div>
                             {cmd.status === 'pending' ? (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
-                                MENUNGGU INSTANCE
+                              <span className="text-[10px] font-mono font-medium px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 border border-amber-200">
+                                PENDING INSTANCE
                               </span>
                             ) : (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
-                                BERHASIL DIEKSEKUSI
+                              <span className="text-[10px] font-mono font-medium px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                EXECUTED SUCCESS
                               </span>
                             )}
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div className="py-6 text-center text-slate-400">
+                      <div className="p-8 text-center text-zinc-400">
                         Belum ada riwayat perintah remote yang dikirim.
                       </div>
                     )}
