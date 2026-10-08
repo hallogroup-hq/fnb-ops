@@ -24,6 +24,13 @@ import {
   calculateFleetStats,
 } from '../lib/fleet/telemetryStore'
 
+import {
+  INITIAL_TENANTS,
+  INITIAL_REMOTE_LOGS,
+  INITIAL_STAFF_AUDIT_LOGS,
+  INITIAL_PROVISIONING_REQUESTS,
+} from '../lib/fleet/mockRealTenants'
+
 import type {
   TenantStore,
   RemoteLogEntry,
@@ -38,12 +45,12 @@ export default function FleetOpsApp() {
   const [activeTab, setActiveTab] = useState<ActiveOpsTab>('overview')
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false)
 
-  // STORE STATE
-  const [tenants, setTenants] = useState<TenantStore[]>([])
-  const [logs, setLogs] = useState<RemoteLogEntry[]>([])
+  // STORE STATE (Initialized with initial tenants for immediate SSR hydration)
+  const [tenants, setTenants] = useState<TenantStore[]>(INITIAL_TENANTS)
+  const [logs, setLogs] = useState<RemoteLogEntry[]>(INITIAL_REMOTE_LOGS)
   const [commands, setCommands] = useState<RemoteRepairCommand[]>([])
-  const [requests, setRequests] = useState<ProvisioningRequest[]>([])
-  const [auditLogs, setAuditLogs] = useState<StaffAuditLog[]>([])
+  const [requests, setRequests] = useState<ProvisioningRequest[]>(INITIAL_PROVISIONING_REQUESTS)
+  const [auditLogs, setAuditLogs] = useState<StaffAuditLog[]>(INITIAL_STAFF_AUDIT_LOGS)
 
   const [selectedTenantForModal, setSelectedTenantForModal] = useState<TenantStore | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
