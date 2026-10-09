@@ -331,7 +331,7 @@ export default function BillingTab({
                           t.billingStatus === 'active'
                             ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                             : t.billingStatus === 'trial'
-                            ? 'bg-blue-50 text-blue-700 border-blue-200'
+                            ? 'bg-zinc-900 text-white border-zinc-800'
                             : t.billingStatus === 'past_due'
                             ? 'bg-rose-50 text-rose-700 border-rose-200'
                             : 'bg-zinc-100 text-zinc-600 border-zinc-200'
